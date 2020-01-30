@@ -1,0 +1,74 @@
+{
+  "name": "@coderbyheart/nrfcloud-udp-proxy",
+  "version": "0.0.0-development",
+  "description": "A proxy for devices that need to send data using UDP to nRF Connect for Cloud",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "dist/proxy.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/coderbyheart/nrfcloud-udp-proxy.git"
+  },
+  "keywords": [
+    "nRF Connect for Cloud",
+    "Nordic Semiconductor",
+    "IoT"
+  ],
+  "author": "Markus Tacker <m@coderbyheart.com> | https://coderbyheart.com",
+  "license": "BSD-3-Clause",
+  "bugs": {
+    "url": "https://github.com/coderbyheart/nrfcloud-udp-proxy/issues"
+  },
+  "homepage": "https://github.com/coderbyheart/nrfcloud-udp-proxy#readme",
+  "dependencies": {
+    "aws-sdk": "^2.610.0",
+    "chalk": "^3.0.0",
+    "commander": "^4.1.0",
+    "node-fetch": "^2.6.0",
+    "uuid": "^3.4.0"
+  },
+  "devDependencies": {
+    "@bifravst/code-style": "^6.0.2",
+    "@commitlint/cli": "^8.3.5",
+    "@commitlint/config-angular": "^8.3.4",
+    "@types/aws-iot-device-sdk": "^2.2.1",
+    "@types/aws-sdk": "^2.7.0",
+    "@types/chalk": "^2.2.0",
+    "@types/commander": "^2.12.2",
+    "@types/node": "^13.5.2",
+    "@types/node-fetch": "^2.5.4",
+    "@types/uuid": "^3.4.7",
+    "aws-iot-device-sdk": "^2.2.3",
+    "husky": "^4.2.1",
+    "typescript": "^3.7.5"
+  },
+  "husky": {
+    "hooks": {
+      "commit-msg": "commitlint -e",
+      "pre-commit": "lint-staged && npx tsc"
+    }
+  },
+  "lint-staged": {
+    "*.{md,json,yaml,yml}": [
+      "prettier --write"
+    ],
+    "*.{ts,tsx}": [
+      "prettier --write",
+      "eslint --ext .js,.ts"
+    ]
+  },
+  "engines": {
+    "node": ">=12.0.0",
+    "npm": ">=6.0.0"
+  },
+  "release": {
+    "branch": "saga",
+    "remoteTags": true,
+    "plugins": [
+      "@semantic-release/commit-analyzer",
+      "@semantic-release/release-notes-generator",
+      "@semantic-release/github"
+    ]
+  }
+}
