@@ -5,6 +5,7 @@ import * as path from 'path'
 import fetch from 'node-fetch'
 import { v4 } from 'uuid'
 import { device } from 'aws-iot-device-sdk'
+import * as dgram from 'dgram'
 
 let ran = false
 
@@ -148,6 +149,69 @@ program
 									data: 'Hello from the proxy!',
 								}),
 							)
+							// start UDP server
+							const server = dgram.createSocket('udp4')
+
+							// emits when any error occurs
+							server.on('error', error => {
+								console.log(
+									chalk.red('UDP Server Error:'),
+									chalk.yellow(error.message),
+								)
+								server.close()
+							})
+
+							// emits on new datagram msg
+							server.on('message', (msg, info) => {
+								console.log(
+									chalk.magenta('UDP Server Message received:'),
+									chalk.yellow(msg.toString()),
+								)
+								console.log(
+									chalk.magenta('Sender:'),
+									chalk.blue(JSON.stringify(info)),
+								)
+								const [appId, data] = msg
+									.toString()
+									.trim()
+									.split(':')
+								connection.publish(
+									`${messagesPrefix}d/${deviceId}/d2c`,
+									JSON.stringify({
+										appId,
+										messageType: 'DATA',
+										data,
+									}),
+								)
+							})
+
+							//emits when socket is ready and listening for datagram msgs
+							server.on('listening', () => {
+								const address = server.address()
+								const port = address.port
+								const family = address.family
+								const ipaddr = address.address
+
+								console.log(
+									chalk.magenta('UDP Server is listening at port'),
+									chalk.blue(port),
+								)
+								console.log(
+									chalk.magenta('UDP Server is listening at ip'),
+									chalk.blue(ipaddr),
+								)
+								console.log(
+									chalk.magenta('UDP Server is IPv4/6'),
+									chalk.blue(family),
+								)
+							})
+
+							//emits after the socket is closed using socket.close()
+							server.on('close', () => {
+								console.log(chalk.magenta('UDP Server closed'))
+							})
+
+							server.bind(8888)
 						} else {
 							console.log(chalk.red(err.message))
 						}
