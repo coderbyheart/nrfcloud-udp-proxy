@@ -60,7 +60,10 @@ program
 				Authorization: `Bearer ${apiKey}`,
 			},
 		})
-		const { mqttEndpoint } = await account.json()
+		const {
+			mqttEndpoint,
+			topics: { messagesPrefix },
+		} = await account.json()
 		console.log(chalk.yellow('Endpoint:'), chalk.blue(mqttEndpoint))
 		console.time(chalk.green(chalk.inverse(' connected ')))
 
@@ -132,8 +135,24 @@ program
 							},
 						},
 					}),
+					undefined,
+					err => {
+						if (!err) {
+							console.log(chalk.green('All UI services enabled.'))
+							console.log(`${messagesPrefix}d/${deviceId}/d2c`)
+							connection.publish(
+								`${messagesPrefix}d/${deviceId}/d2c`,
+								JSON.stringify({
+									appId: 'DEVICE',
+									messageType: 'DATA',
+									data: 'Hello from the proxy!',
+								}),
+							)
+						} else {
+							console.log(chalk.red(err.message))
+						}
+					},
 				)
-				console.log(chalk.green('All UI services enabled.'))
 			}
 		})
 
