@@ -10,8 +10,8 @@ import * as dgram from 'dgram'
 let ran = false
 
 program
-	.arguments('<apiKey>')
-	.action(async (apiKey: string) => {
+	.arguments('<apiKey> <ip> <port>')
+	.action(async (apiKey: string, ip: string, port: string) => {
 		ran = true
 
 		let config: { [key: string]: any }
@@ -211,7 +211,7 @@ program
 								console.log(chalk.magenta('UDP Server closed'))
 							})
 
-							server.bind(8888)
+							server.bind(parseInt(port, 10), ip)
 						} else {
 							console.log(chalk.red(err.message))
 						}
