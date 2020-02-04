@@ -1,53 +1,80 @@
-import * as program from 'commander'
 import * as chalk from 'chalk'
 import * as fs from 'fs'
 import * as path from 'path'
 import fetch from 'node-fetch'
 import { v4 } from 'uuid'
-import { device } from 'aws-iot-device-sdk'
-import * as dgram from 'dgram'
+import { device } from './device'
+import { device as AwsIotDevice } from 'aws-iot-device-sdk'
+import { server } from './udp-server'
 
-let ran = false
+const data = process.env.DATA_DIR || process.cwd()
+const apiKey = process.env.API_KEY || ''
+const port = process.env.PORT || '8888'
 
-program
-	.arguments('<apiKey>')
-	.option('-p, --port <port>')
-	.option('-d, --data <location>')
-	.action(async (apiKey: string, { port, data }) => {
-		ran = true
-		if (!data) data = process.cwd()
-		let config: { [key: string]: any }
-		const configFile = path.join(data, 'config.json')
-		console.log(configFile)
-		try {
-			config = JSON.parse(fs.readFileSync(configFile, 'utf-8').toString())
-		} catch {
-			console.log(chalk.yellow('No configuration found, creating new device.'))
-			const deviceId = v4()
-			const ownershipCode = v4()
-			const res = await fetch(
-				`https://api.nrfcloud.com/v1/devices/${deviceId}/certificates`,
-				{
-					method: 'POST',
-					headers: {
-						Authorization: `Bearer ${apiKey}`,
-					},
-					body: `${ownershipCode}`,
+const proxy = async () => {
+	let config: {
+		deviceId: string
+		ownershipCode: string
+		caCert: string
+		privateKey: string
+		clientCert: string
+		associated?: boolean
+	}[]
+
+	const configFile = path.join(data, 'config.json')
+	try {
+		config = JSON.parse(fs.readFileSync(configFile, 'utf-8').toString())
+	} catch {
+		console.log(chalk.yellow('No configuration found, creating...'))
+		config = []
+	}
+	const writeConfig = () =>
+		fs.writeFileSync(configFile, JSON.stringify(config, null, 2), 'utf-8')
+
+	while (config.length < 3) {
+		const deviceId = v4()
+		const ownershipCode = v4()
+		const res = await fetch(
+			`https://api.nrfcloud.com/v1/devices/${deviceId}/certificates`,
+			{
+				method: 'POST',
+				headers: {
+					Authorization: `Bearer ${apiKey}`,
 				},
-			)
-			const { caCert, privateKey, clientCert } = await res.json()
-			config = {
-				deviceId,
-				ownershipCode,
-				caCert,
-				privateKey,
-				clientCert,
-			}
-			fs.writeFileSync(configFile, JSON.stringify(config, null, 2), 'utf-8')
-		}
+				body: `${ownershipCode}`,
+			},
+		)
+		const { caCert, privateKey, clientCert } = await res.json()
+		config.push({
+			deviceId,
+			ownershipCode,
+			caCert,
+			privateKey,
+			clientCert,
+		})
+		console.log(chalk.green('New device created:'), chalk.cyan(deviceId))
+		writeConfig()
+	}
 
-		console.log(JSON.parse(fs.readFileSync(configFile, 'utf-8').toString()))
+	// Connect
+	const account = await fetch(`https://api.nrfcloud.com/v1/account`, {
+		method: 'GET',
+		headers: {
+			Authorization: `Bearer ${apiKey}`,
+		},
+	})
+	const {
+		mqttEndpoint,
+		topics: { messagesPrefix },
+	} = await account.json()
+	console.log(chalk.yellow('Endpoint:'), chalk.blue(mqttEndpoint))
 
+	const deviceConnections = [] as {
+		connection: AwsIotDevice
+		deviceId: string
+	}[]
+
+	config.forEach((deviceConfig, deviceShortId) => {
 		const {
 			deviceId,
 			caCert,
@@ -55,191 +82,71 @@ program
 			clientCert,
 			ownershipCode,
 			associated,
-		} = config
+		} = deviceConfig
 
-		console.log(chalk.yellow('Device ID:'), chalk.blue(deviceId))
-
-		// Connect
-		const account = await fetch(`https://api.nrfcloud.com/v1/account`, {
-			method: 'GET',
-			headers: {
-				Authorization: `Bearer ${apiKey}`,
-			},
-		})
-		const {
-			mqttEndpoint,
-			topics: { messagesPrefix },
-		} = await account.json()
-		console.log(chalk.yellow('Endpoint:'), chalk.blue(mqttEndpoint))
-		console.time(chalk.green(chalk.inverse(' connected ')))
-
-		const note = chalk.magenta(
-			`Still connecting ... First connect takes around 30 seconds`,
-		)
-		console.time(note)
-		const connectingNote = setInterval(() => {
-			console.timeLog(note)
-		}, 5000)
-
-		const connection = new device({
-			privateKey: Buffer.from(privateKey),
-			clientCert: Buffer.from(clientCert),
-			caCert: Buffer.from(caCert),
-			clientId: deviceId,
-			host: mqttEndpoint,
-			region: mqttEndpoint.split('.')[2],
-		})
-
-		connection.on('connect', async () => {
-			console.timeEnd(chalk.green(chalk.inverse(' connected ')))
-			clearInterval(connectingNote)
-			// Associate it
-			if (!associated) {
-				await fetch(`https://api.nrfcloud.com/v1/association/${deviceId}`, {
-					method: 'PUT',
-					headers: {
-						Authorization: `Bearer ${apiKey}`,
-					},
-					body: ownershipCode,
-				})
-				console.log(chalk.green('Device associated to tenant.'))
-				console.log(chalk.magentaBright('Restart script!'))
-				connection.end()
-				fs.writeFileSync(
-					configFile,
-					JSON.stringify(
-						{
-							...config,
-							associated: true,
-						},
-						null,
-						2,
+		console.log(chalk.yellow('Connecting device ID:'), chalk.blue(deviceId))
+		deviceConnections.push({
+			deviceId,
+			connection: device({
+				deviceId,
+				caCert,
+				privateKey,
+				clientCert,
+				ownershipCode,
+				associated: associated || false,
+				mqttEndpoint,
+				onAssociated: () => {
+					deviceConnections[0]?.connection.publish(
+						`${messagesPrefix}d/${deviceId}/d2c`,
+						JSON.stringify({
+							appId: 'DEVICE',
+							messageType: 'DATA',
+							data: `Hello from the proxy! I am device ${deviceShortId}.`,
+						}),
+					)
+					config[deviceShortId].associated = true
+					writeConfig()
+				},
+				apiKey,
+				log: (...args) =>
+					console.log(
+						chalk.bgCyan(` ${deviceShortId} `),
+						chalk.cyan(deviceId),
+						...args,
 					),
-					'utf-8',
-				)
-			} else {
-				connection.publish(
-					`$aws/things/${deviceId}/shadow/update`,
-					JSON.stringify({
-						state: {
-							reported: {
-								device: {
-									serviceInfo: {
-										ui: [
-											'GPS',
-											'FLIP',
-											'GEN',
-											'TEMP',
-											'HUMID',
-											'AIR_PRESS',
-											'RSRP',
-											'BUTTON',
-											'DEVICE',
-										],
-									},
-								},
-							},
-						},
-					}),
-					undefined,
-					err => {
-						if (!err) {
-							console.log(chalk.green('All UI services enabled.'))
-							console.log(`${messagesPrefix}d/${deviceId}/d2c`)
-							connection.publish(
-								`${messagesPrefix}d/${deviceId}/d2c`,
-								JSON.stringify({
-									appId: 'DEVICE',
-									messageType: 'DATA',
-									data: 'Hello from the proxy!',
-								}),
-							)
-							// start UDP server
-							const server = dgram.createSocket('udp4')
-
-							// emits when any error occurs
-							server.on('error', error => {
-								console.log(
-									chalk.red('UDP Server Error:'),
-									chalk.yellow(error.message),
-								)
-								server.close()
-							})
-
-							// emits on new datagram msg
-							server.on('message', (msg, info) => {
-								console.log(
-									chalk.magenta('UDP Server Message received:'),
-									chalk.yellow(msg.toString()),
-								)
-								console.log(
-									chalk.magenta('Sender:'),
-									chalk.blue(JSON.stringify(info)),
-								)
-								const [appId, data] = msg
-									.toString()
-									.trim()
-									.split(':')
-								connection.publish(
-									`${messagesPrefix}d/${deviceId}/d2c`,
-									JSON.stringify({
-										appId,
-										messageType: 'DATA',
-										data,
-									}),
-								)
-							})
-
-							//emits when socket is ready and listening for datagram msgs
-							server.on('listening', () => {
-								const address = server.address()
-								const port = address.port
-								const family = address.family
-								const ipaddr = address.address
-
-								console.log(
-									chalk.magenta('UDP Server is listening at port'),
-									chalk.blue(port),
-								)
-								console.log(
-									chalk.magenta('UDP Server is listening at ip'),
-									chalk.blue(ipaddr),
-								)
-								console.log(
-									chalk.magenta('UDP Server is IPv4/6'),
-									chalk.blue(family),
-								)
-							})
-
-							//emits after the socket is closed using socket.close()
-							server.on('close', () => {
-								console.log(chalk.magenta('UDP Server closed'))
-							})
-
-							server.bind(port ? parseInt(port, 10) : 8888)
-						} else {
-							console.log(chalk.red(err.message))
-						}
-					},
-				)
-			}
-		})
-
-		connection.on('close', () => {
-			console.error(chalk.red(chalk.inverse(' disconnected! ')))
-		})
-
-		connection.on('reconnect', () => {
-			console.log(chalk.magenta('reconnecting...'))
-		})
-
-		connection.on('error', () => {
-			console.log(chalk.red(' ERROR '))
+			}),
 		})
 	})
-	.parse(process.argv)
 
-if (!ran) {
-	program.outputHelp(chalk.red)
-	process.exit(1)
+	server({
+		port: parseInt(port, 10),
+		log: (...args) => console.log(chalk.magenta('UDP Server'), ...args),
+		onMessage: ({ deviceShortId, appId, data }) => {
+			const c = deviceConnections[deviceShortId]
+			if (!c) {
+				console.error(
+					chalk.magenta('UDP Server'),
+					chalk.red(`Device ${deviceShortId} not registered!`),
+				)
+				return
+			}
+			const topic = `${messagesPrefix}d/${c.deviceId}/d2c`
+			const message = JSON.stringify({
+				appId,
+				messageType: 'DATA',
+				data,
+			})
+			console.log(
+				chalk.bgCyan(` ${deviceShortId} `),
+				chalk.blue('>'),
+				chalk.green(message),
+			)
+			c.connection.publish(topic, message)
+		},
+	})
 }
+
+proxy().catch(err => {
+	console.error(err.message)
+	process.exit(1)
+})
