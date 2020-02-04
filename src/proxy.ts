@@ -10,12 +10,15 @@ import * as dgram from 'dgram'
 let ran = false
 
 program
-	.arguments('<apiKey> <ip> <port>')
-	.action(async (apiKey: string, ip: string, port: string) => {
+	.arguments('<apiKey>')
+	.option('-p, --port <port>')
+	.option('-d, --data <location>')
+	.action(async (apiKey: string, { port, data }) => {
 		ran = true
-
+		if (!data) data = process.cwd()
 		let config: { [key: string]: any }
-		const configFile = path.join(process.cwd(), 'config.json')
+		const configFile = path.join(data, 'config.json')
+		console.log(configFile)
 		try {
 			config = JSON.parse(fs.readFileSync(configFile, 'utf-8').toString())
 		} catch {
@@ -42,6 +45,8 @@ program
 			}
 			fs.writeFileSync(configFile, JSON.stringify(config, null, 2), 'utf-8')
 		}
+
+		console.log(JSON.parse(fs.readFileSync(configFile, 'utf-8').toString()))
 
 		const {
 			deviceId,
@@ -211,7 +216,7 @@ program
 								console.log(chalk.magenta('UDP Server closed'))
 							})
 
-							server.bind(parseInt(port, 10), ip)
+							server.bind(port ? parseInt(port, 10) : 8888)
 						} else {
 							console.log(chalk.red(err.message))
 						}
