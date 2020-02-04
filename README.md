@@ -17,10 +17,10 @@
     # Authenticate against GitHub: echo "//npm.pkg.github.com/:_authToken=${GITHUB_TOKEN}" > ~/.npmrc
     npm ci
     npx tsc
-    node dist/proxy.js ${API_KEY}
+    forever dist/proxy.js
 
 ### using Docker
 
     docker build -t nrfcloud-udp-proxy . --build-arg GITHUB_TOKEN=${GITHUB_TOKEN}
     docker volume create nrfcloud-udp-proxy
-    docker run -d -p 8888/udp --name nrfcloud-udp-proxy --rm nrfcloud-udp-proxy -v nrfcloud-udp-proxy:/data node dist/proxy.js ${API_KEY} -d /data
+    docker run -d -p 8888/udp --name nrfcloud-udp-proxy --rm -v nrfcloud-udp-proxy:/data nrfcloud-udp-proxy DATA_DIR=/data forever dist/proxy.js

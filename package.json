@@ -24,7 +24,6 @@
   "dependencies": {
     "aws-sdk": "^2.610.0",
     "chalk": "^3.0.0",
-    "commander": "^4.1.1",
     "node-fetch": "^2.6.0",
     "uuid": "^3.4.0"
   },
@@ -35,11 +34,11 @@
     "@types/aws-iot-device-sdk": "^2.2.1",
     "@types/aws-sdk": "^2.7.0",
     "@types/chalk": "^2.2.0",
-    "@types/commander": "^2.12.2",
     "@types/node": "^13.7.0",
     "@types/node-fetch": "^2.5.4",
     "@types/uuid": "^3.4.7",
     "aws-iot-device-sdk": "^2.2.3",
+    "forever": "^2.0.0",
     "husky": "^4.2.1",
     "typescript": "^3.7.5"
   },
