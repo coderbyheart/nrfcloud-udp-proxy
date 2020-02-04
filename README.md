@@ -1,5 +1,7 @@
 # nRF Connect for Cloud UDP Proxy
 
+[![Greenkeeper badge](https://badges.greenkeeper.io/coderbyheart/nrfcloud-udp-proxy.svg)](https://greenkeeper.io/)
+
 ## Run it locally
 
     export GITHUB_TOKEN=<a github token with needs registry read access>
