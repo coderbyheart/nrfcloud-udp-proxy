@@ -40,6 +40,7 @@ These examples use netcat to send UDP messages for device `2` to the proxy:
     echo '2:{"appId":"TEMP","data":"27.9","messageType":"DATA"}' | nc -c -w1 -u 127.0.0.1 8888
     echo '2:{"appId":"HUMID","data":"23.9","messageType":"DATA"}' | nc -c -w1 -u 127.0.0.1 8888
     echo '2:{"appId":"AIR_PRESS","data":"96.5","messageType":"DATA"}' | nc -c -w1 -u 127.0.0.1 8888
+    echo '2:{"appId": "GPS","messageType": "DATA","data": "$GPGGA,141856.00,6326.27336,N,01028.08721,E,1,09,0.81,34.7,M,39.8,M,,*64"}' | nc -c -w1 -u 127.0.0.1 8888
 
 ## Run it locally
 
