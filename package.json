@@ -4,7 +4,7 @@
   "description": "A proxy for devices that need to send data using UDP to nRF Connect for Cloud",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "dist/proxy.js"
+    "start": "node dist/proxy.js"
   },
   "repository": {
     "type": "git",
