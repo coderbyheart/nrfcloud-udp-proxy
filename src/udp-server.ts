@@ -7,11 +7,7 @@ export const server = ({
 	log,
 }: {
 	port: number
-	onMessage: (args: {
-		deviceShortId: number
-		appId: string
-		data: string
-	}) => void
+	onMessage: (args: { deviceShortId: number; message: string }) => void
 	log: (...args: any[]) => void
 }) => {
 	const server = dgram.createSocket('udp4')
@@ -27,14 +23,13 @@ export const server = ({
 			chalk.cyan(`${info.address}:${info.port}`),
 			chalk.yellow(msg.toString().trim()),
 		)
-		const [deviceShortId, appId, data] = msg
+		const [deviceShortId, ...message] = msg
 			.toString()
 			.trim()
 			.split(':')
 		onMessage({
 			deviceShortId: parseInt(deviceShortId, 10),
-			appId,
-			data,
+			message: message.join(':'),
 		})
 	})
 

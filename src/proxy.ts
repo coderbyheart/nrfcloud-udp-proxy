@@ -6,10 +6,20 @@ import { v4 } from 'uuid'
 import { device } from './device'
 import { device as AwsIotDevice } from 'aws-iot-device-sdk'
 import { server } from './udp-server'
+import { tryCatch, isLeft } from 'fp-ts/lib/Either'
 
 const data = process.env.DATA_DIR || process.cwd()
 const apiKey = process.env.API_KEY || ''
 const port = process.env.PORT || '8888'
+const deviceCount = process.env.DEVICE_COUNT
+	? parseInt(process.env.DEVICE_COUNT, 10)
+	: 3
+
+const parseJSON = (json: string) =>
+	tryCatch<Error, object>(
+		() => JSON.parse(json),
+		() => new Error(`Failed to parse JSON: ${json}!`),
+	)
 
 const proxy = async () => {
 	let config: {
@@ -31,7 +41,7 @@ const proxy = async () => {
 	const writeConfig = () =>
 		fs.writeFileSync(configFile, JSON.stringify(config, null, 2), 'utf-8')
 
-	while (config.length < 3) {
+	while (config.length < deviceCount) {
 		const deviceId = v4()
 		const ownershipCode = v4()
 		const res = await fetch(
@@ -71,6 +81,7 @@ const proxy = async () => {
 
 	const deviceConnections = [] as {
 		connection: AwsIotDevice
+		updateShadow: (update: object) => Promise<void>
 		deviceId: string
 	}[]
 
@@ -84,10 +95,14 @@ const proxy = async () => {
 			associated,
 		} = deviceConfig
 
-		console.log(chalk.yellow('Connecting device ID:'), chalk.blue(deviceId))
+		console.log(
+			chalk.bgCyan(` ${deviceShortId} `),
+			chalk.yellow('Connecting device:'),
+			chalk.cyan(deviceId),
+		)
 		deviceConnections.push({
 			deviceId,
-			connection: device({
+			...device({
 				deviceId,
 				caCert,
 				privateKey,
@@ -109,11 +124,7 @@ const proxy = async () => {
 				},
 				apiKey,
 				log: (...args) =>
-					console.log(
-						chalk.bgCyan(` ${deviceShortId} `),
-						chalk.cyan(deviceId),
-						...args,
-					),
+					console.log(chalk.bgCyan(` ${deviceShortId} `), ...args),
 			}),
 		})
 	})
@@ -121,7 +132,7 @@ const proxy = async () => {
 	server({
 		port: parseInt(port, 10),
 		log: (...args) => console.log(chalk.magenta('UDP Server'), ...args),
-		onMessage: ({ deviceShortId, appId, data }) => {
+		onMessage: ({ deviceShortId, message }) => {
 			const c = deviceConnections[deviceShortId]
 			if (!c) {
 				console.error(
@@ -130,18 +141,34 @@ const proxy = async () => {
 				)
 				return
 			}
-			const topic = `${messagesPrefix}d/${c.deviceId}/d2c`
-			const message = JSON.stringify({
-				appId,
-				messageType: 'DATA',
-				data,
-			})
-			console.log(
-				chalk.bgCyan(` ${deviceShortId} `),
-				chalk.blue('>'),
-				chalk.green(message),
-			)
-			c.connection.publish(topic, message)
+			const maybeParsedMessage = parseJSON(message)
+			if (isLeft(maybeParsedMessage)) {
+				console.error(
+					chalk.magenta('UDP Server'),
+					chalk.red('Failed to parse message as JSON!'),
+					chalk.yellow(message),
+				)
+				return
+			}
+			if ('state' in maybeParsedMessage.right) {
+				c.updateShadow(maybeParsedMessage.right).catch(err => {
+					console.error(
+						chalk.magenta('UDP Server'),
+						chalk.red(
+							`Failed to update shadow for device ${deviceShortId}: ${err.message}!`,
+						),
+					)
+				})
+			} else {
+				const topic = `${messagesPrefix}d/${c.deviceId}/d2c`
+				c.connection.publish(topic, message)
+				console.log(
+					chalk.bgCyan(` ${deviceShortId} `),
+					chalk.blue('>'),
+					chalk.cyan(topic),
+					chalk.yellow(message),
+				)
+			}
 		},
 	})
 }

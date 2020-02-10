@@ -7,6 +7,40 @@
 [![code style: prettier](https://img.shields.io/badge/code_style-prettier-ff69b4.svg)](https://github.com/prettier/prettier/)
 [![ESLint: TypeScript](https://img.shields.io/badge/ESLint-TypeScript-blue.svg)](https://github.com/typescript-eslint/typescript-eslint)
 
+This proxy provides a UDP server, which listens for plaintext messages in the
+format:
+
+    <device id>:<message>
+
+where `<device id>` is an integer identifying the local device on the proxy and
+`<message>` is a JSON formatted application or shadow update message.
+
+The proxy maintains device connections for a configurable amount of devices, set
+the `DEVICE_COUNT` environment variable to override the default of `3`.
+
+## Examples
+
+These examples use netcat to send UDP messages for device `2` to the proxy:
+
+    echo '2:{"state":{"reported":{"DEVICE":null,"device":{"networkInfo":{"currentBand":20,"supportedBands":"(2,3,4,8,12,13,20,28)","areaCode":30501,"mccmnc":"24201","ipAddress":"10.138.82.5 0000:0000:0000:0000:0000:0028:9E4C:7E01","ueMode":2,"cellID":20504576,"networkMode":"LTE-M GPS"},"simInfo":{"uiccMode":1,"iccid":"89470060171107305562","imsi":"242016000035951"},"deviceInfo":{"modemFirmware":"mfw_nrf9160_1.1.0","batteryVoltage":4281,"imei":"352656100442808","board":"nrf9160_pca20035","appVersion":"v1.2.0-rc1-5-g4f8f4f0b2134","appName":"asset_tracker"},"serviceInfo":{"ui":["GPS","FLIP","TEMP","HUMID","AIR_PRESS","BUTTON","LIGHT","RSRP"],"fota_v1":null}}}}}' | nc -c -w1 -u 127.0.0.1 8888
+    echo '2:{"appId":"RSRP","data":"-91","messageType":"DATA"}' | nc -c -w1 -u 127.0.0.1 8888
+    echo '2:{"appId":"TEMP","data":"27.6","messageType":"DATA"}' | nc -c -w1 -u 127.0.0.1 8888
+    echo '2:{"appId":"HUMID","data":"24.0","messageType":"DATA"}' | nc -c -w1 -u 127.0.0.1 8888
+    echo '2:{"appId":"AIR_PRESS","data":"96.5","messageType":"DATA"}' | nc -c -w1 -u 127.0.0.1 8888
+    echo '2:{"appId":"LIGHT","data":"37 91 41 11","messageType":"DATA"}' | nc -c -w1 -u 127.0.0.1 8888
+    echo '2:{"appId":"FLIP","data":"NORMAL","messageType":"DATA"}' | nc -c -w1 -u 127.0.0.1 8888
+    echo '2:{"appId":"FLIP","data":"UPSIDE_DOWN","messageType":"DATA"}' | nc -c -w1 -u 127.0.0.1 8888
+    echo '2:{"appId":"FLIP","data":"NORMAL","messageType":"DATA"}' | nc -c -w1 -u 127.0.0.1 8888
+    echo '2:{"appId":"BUTTON","data":"1","messageType":"DATA"}' | nc -c -w1 -u 127.0.0.1 8888
+    echo '2:{"appId":"BUTTON","data":"0","messageType":"DATA"}' | nc -c -w1 -u 127.0.0.1 8888
+    echo '2:{"appId":"TEMP","data":"27.6","messageType":"DATA"}' | nc -c -w1 -u 127.0.0.1 8888
+    echo '2:{"appId":"HUMID","data":"23.6","messageType":"DATA"}' | nc -c -w1 -u 127.0.0.1 8888
+    echo '2:{"appId":"AIR_PRESS","data":"96.5","messageType":"DATA"}' | nc -c -w1 -u 127.0.0.1 8888
+    echo '2:{"appId":"LIGHT","data":"37 88 37 10","messageType":"DATA"}' | nc -c -w1 -u 127.0.0.1 8888
+    echo '2:{"appId":"TEMP","data":"27.9","messageType":"DATA"}' | nc -c -w1 -u 127.0.0.1 8888
+    echo '2:{"appId":"HUMID","data":"23.9","messageType":"DATA"}' | nc -c -w1 -u 127.0.0.1 8888
+    echo '2:{"appId":"AIR_PRESS","data":"96.5","messageType":"DATA"}' | nc -c -w1 -u 127.0.0.1 8888
+
 ## Run it locally
 
     export GITHUB_TOKEN=<a github token with needs registry read access>
@@ -17,7 +51,7 @@
     # Authenticate against GitHub: echo "//npm.pkg.github.com/:_authToken=${GITHUB_TOKEN}" > ~/.npmrc
     npm ci
     npx tsc
-    forever dist/proxy.js
+    npx forever dist/proxy.js
 
 ### using Docker
 

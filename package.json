@@ -39,6 +39,7 @@
     "@types/uuid": "^3.4.7",
     "aws-iot-device-sdk": "^2.2.3",
     "forever": "^2.0.0",
+    "fp-ts": "^2.4.4",
     "husky": "^4.2.1",
     "typescript": "^3.7.5"
   },
