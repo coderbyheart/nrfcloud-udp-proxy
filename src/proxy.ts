@@ -167,14 +167,19 @@ const proxy = async () => {
 						response.end()
 					})
 				break
-			case '/locations':
+			case '/devices':
 				;(() => {
-					const l = JSON.stringify(deviceLocations)
+					const d = deviceConnections.map(({ deviceId }, k) => ({
+						shortId: k,
+						deviceId,
+						location: deviceLocations[deviceId],
+					}))
+					const res = JSON.stringify(d)
 					response.writeHead(200, {
-						'Content-Length': l.length,
+						'Content-Length': res.length,
 						'Content-Type': 'application/json',
 					})
-					response.end(l)
+					response.end(res)
 				})()
 				break
 			default:
