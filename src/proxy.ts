@@ -5,18 +5,25 @@ import fetch from 'node-fetch'
 import { v4 } from 'uuid'
 import { device } from './device'
 import { device as AwsIotDevice } from 'aws-iot-device-sdk'
-import { server } from './udp-server'
+import { server as UDPServer } from './udp-server'
 import { tryCatch, isLeft } from 'fp-ts/lib/Either'
+import { parseNmeaSentence, Packet } from 'nmea-simple'
+import {
+	server as WebSocketServer,
+	connection as WSConnection,
+} from 'websocket'
+import * as http from 'http'
 
 const data = process.env.DATA_DIR || process.cwd()
 const apiKey = process.env.API_KEY || ''
 const port = process.env.PORT || '8888'
+const httpPort = process.env.HTTP_PORT || '8080'
 const deviceCount = process.env.DEVICE_COUNT
 	? parseInt(process.env.DEVICE_COUNT, 10)
 	: 3
 
 const parseJSON = (json: string) =>
-	tryCatch<Error, object>(
+	tryCatch<Error, any>(
 		() => JSON.parse(json),
 		() => new Error(`Failed to parse JSON: ${json}!`),
 	)
@@ -129,7 +136,81 @@ const proxy = async () => {
 		})
 	})
 
-	server({
+	const wsConnections: WSConnection[] = []
+	const deviceLocations: {
+		[key: string]: Packet
+	} = {}
+
+	const httpServer = http.createServer(async (request, response) => {
+		if (request.method === 'OPTIONS') {
+			response.writeHead(200, {
+				'Access-Control-Allow-Methods': 'GET,OPTIONS,POST',
+				'Access-Control-Allow-Headers': 'Content-Type',
+				'Access-Control-Allow-Origin': '*',
+			})
+			response.end()
+			return
+		}
+		switch (request.url) {
+			case '/':
+				fs.promises
+					.readFile(path.join(process.cwd(), 'web', 'index.html'), 'utf-8')
+					.then(index => {
+						response.writeHead(200, {
+							'Content-Length': index.length,
+							'Content-Type': 'text/html',
+						})
+						response.end(index)
+					})
+					.catch(() => {
+						response.statusCode = 500
+						response.end()
+					})
+				break
+			case '/locations':
+				;(() => {
+					const l = JSON.stringify(deviceLocations)
+					response.writeHead(200, {
+						'Content-Length': l.length,
+						'Content-Type': 'application/json',
+					})
+					response.end(l)
+				})()
+				break
+			default:
+				response.statusCode = 404
+				response.end()
+		}
+	})
+
+	httpServer.listen(httpPort, () => {
+		console.log(
+			chalk.yellowBright('WS Server'),
+			chalk.cyan('is listening at'),
+			chalk.blue(`0.0.0.0:${httpPort}`),
+		)
+		const wsServer = new WebSocketServer({
+			httpServer,
+		})
+		wsServer.on('request', request => {
+			const connection = request.accept(undefined, request.origin)
+			console.log(
+				chalk.yellowBright('WS Server'),
+				chalk.cyan(`${connection.remoteAddress} connected`),
+			)
+
+			wsConnections.push(connection)
+			connection.on('close', () => {
+				console.log(
+					chalk.yellowBright('WS Server'),
+					chalk.cyan(`${connection.remoteAddress} disconnected`),
+				)
+				wsConnections.splice(wsConnections.indexOf(connection))
+			})
+		})
+	})
+
+	UDPServer({
 		port: parseInt(port, 10),
 		log: (...args) => console.log(chalk.magenta('UDP Server'), ...args),
 		onMessage: ({ deviceShortId, message }) => {
@@ -168,6 +249,21 @@ const proxy = async () => {
 					chalk.cyan(topic),
 					chalk.yellow(message),
 				)
+				// For the map feature we want to track the positions of all devices
+				if (maybeParsedMessage.right.appId === 'GPS') {
+					const packet = parseNmeaSentence(maybeParsedMessage.right.data)
+					if (packet.sentenceId === 'GGA') {
+						deviceLocations[c.deviceId] = packet
+						wsConnections.forEach(wsConnection => {
+							wsConnection.send(
+								JSON.stringify({
+									deviceId: c.deviceId,
+									...packet,
+								}),
+							)
+						})
+					}
+				}
 			}
 		},
 	})

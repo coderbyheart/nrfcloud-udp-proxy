@@ -37,7 +37,7 @@ export const server = ({
 		const address = server.address()
 		const port = address.port
 		const ipaddr = address.address
-		log(chalk.magenta('is listening at'), chalk.blue(`${ipaddr}:${port}`))
+		log(chalk.cyan('is listening at'), chalk.blue(`${ipaddr}:${port}`))
 	})
 
 	server.on('close', () => {

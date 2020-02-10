@@ -24,8 +24,10 @@
   "dependencies": {
     "aws-sdk": "^2.614.0",
     "chalk": "^3.0.0",
+    "nmea-simple": "^3.0.0",
     "node-fetch": "^2.6.0",
-    "uuid": "^3.4.0"
+    "uuid": "^3.4.0",
+    "websocket": "^1.0.31"
   },
   "devDependencies": {
     "@bifravst/code-style": "^6.0.4",
@@ -37,6 +39,7 @@
     "@types/node": "^13.7.0",
     "@types/node-fetch": "^2.5.4",
     "@types/uuid": "^3.4.7",
+    "@types/websocket": "^1.0.0",
     "aws-iot-device-sdk": "^2.2.3",
     "forever": "^2.0.0",
     "fp-ts": "^2.4.4",
