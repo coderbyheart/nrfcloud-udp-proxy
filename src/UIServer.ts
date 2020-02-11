@@ -124,8 +124,14 @@ export const UIServer = ({
 	})
 
 	const updateClients = (update: object) => {
-		wsConnections.forEach(wsConnection => {
-			wsConnection.send(JSON.stringify(update))
+		wsConnections.forEach(connection => {
+			console.log(
+				chalk.yellowBright('WS Server'),
+				chalk.blue('>'),
+				chalk.cyan(connection.remoteAddress),
+				chalk.yellow(JSON.stringify(update)),
+			)
+			connection.send(JSON.stringify(update))
 		})
 	}
 
@@ -138,6 +144,12 @@ export const UIServer = ({
 			updateClients({
 				deviceId: device.deviceId,
 				geolocation: geolocation,
+			})
+		},
+		sendDeviceUpdate: (device: DeviceConnection, update: any) => {
+			updateClients({
+				deviceId: device.deviceId,
+				update: update,
 			})
 		},
 	}

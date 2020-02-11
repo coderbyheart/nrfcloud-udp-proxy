@@ -10,9 +10,29 @@ type Device = {
 	deviceId: string
 	name: string
 	geolocation?: GGAPacket
+	temp?: number
 }
 
 const CustomIconStyle = createGlobalStyle`
+	.thingyIcon {
+		span {
+			width: 100%;
+			text-align: center;
+			color: #000000fa;
+			display: block;
+			height: 20px;
+			overflow: hidden;
+			white-space:nowrap;
+			text-shadow: 1px 1px 1px #fff, -1px 1px 1px #fff, 1px -1px 1px #fff, -1px -1px 1px #fff;
+			display: flex;
+    		align-items: flex-end;
+			justify-content: center;
+		}
+		svg {
+			width: 30px;
+			margin-left: 15px;
+		}
+	}
 	.thingy0 {
 		color: #03a8a0;
 	}
@@ -84,6 +104,24 @@ export const Map = ({ proxyEndpoint }: { proxyEndpoint: string }) => {
 					},
 				])
 			}
+			if ('update' in update) {
+				const { appId, data } = update.update
+				if (appId === 'TEMP') {
+					updateDevices(devices => {
+						const d = devices.find(d => update.deviceId === d.deviceId)
+						if (!d) {
+							return devices
+						}
+						return [
+							...devices.filter(d => update.deviceId !== d.deviceId),
+							{
+								...d,
+								temp: parseFloat(data),
+							},
+						]
+					})
+				}
+			}
 		}
 	}, [proxyEndpoint])
 
@@ -112,7 +150,7 @@ export const Map = ({ proxyEndpoint }: { proxyEndpoint: string }) => {
 			/>
 			{devices
 				.filter(({ geolocation }) => geolocation)
-				.map(({ geolocation, name, deviceId }, k) => {
+				.map(({ geolocation, name, deviceId, temp }, k) => {
 					const pos = {
 						lat: (geolocation as GGAPacket).latitude,
 						lng: (geolocation as GGAPacket).longitude,
@@ -120,11 +158,11 @@ export const Map = ({ proxyEndpoint }: { proxyEndpoint: string }) => {
 					return (
 						<Marker
 							icon={L.divIcon({
-								className: `thingy${k}`,
-								iconSize: [30, 30],
-								iconAnchor: [15, 45],
-								popupAnchor: [0, -35],
-								html: MapIcon,
+								className: `thingyIcon thingy${k}`,
+								iconSize: [60, 65],
+								iconAnchor: [30, 65],
+								popupAnchor: [0, -55],
+								html: `<span>${temp ? `${temp}°C` : ''}</span>${MapIcon}`,
 							})}
 							position={pos}
 							key={k}

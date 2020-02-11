@@ -2,6 +2,7 @@ import * as fs from 'fs'
 import * as path from 'path'
 import * as chalk from 'chalk'
 import { v4 } from 'uuid'
+import fetch from 'node-fetch'
 
 export type Config = {
 	deviceId: string

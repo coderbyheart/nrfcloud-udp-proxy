@@ -122,10 +122,12 @@ const proxy = async () => {
 					chalk.bgCyan(` ${deviceShortId} `),
 					chalk.blue('>'),
 					chalk.cyan(topic),
-					chalk.yellow(message),
+					chalk.yellow(JSON.stringify(message)),
 				)
-				// For the map feature we want to track the positions of all devices
+
 				if (message.appId === 'GPS') {
+					// For the map feature we want to track the positions of all devices
+					// parse the NMEA sentence
 					const maybePacket = parseNmea(message.data)
 					if (isLeft(maybePacket)) {
 						console.error(
@@ -138,6 +140,9 @@ const proxy = async () => {
 							uiServer.updateDeviceGeoLocation(c, packet)
 						}
 					}
+				} else {
+					// send everything else verbatim
+					uiServer.sendDeviceUpdate(c, message)
 				}
 			}
 		},

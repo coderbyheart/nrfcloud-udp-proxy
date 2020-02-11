@@ -26,7 +26,7 @@ export const server = ({
 			.toString()
 			.trim()
 			.split(':')
-		if (parts.length >= 2) {
+		if (parts.length < 2) {
 			console.log(
 				chalk.magenta('UDP Server'),
 				chalk.red('Dropping invalid message'),
