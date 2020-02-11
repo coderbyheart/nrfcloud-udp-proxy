@@ -1,13 +1,17 @@
 import * as chalk from 'chalk'
 import * as dgram from 'dgram'
+import { parseJSON, toError, isLeft } from 'fp-ts/lib/Either'
 
 export const server = ({
 	port,
 	onMessage,
 	log,
 }: {
-	port: number
-	onMessage: (args: { deviceShortId: number; message: string }) => void
+	port: number | string
+	onMessage: (args: {
+		deviceShortId: number
+		message: { [key: string]: any }
+	}) => void
 	log: (...args: any[]) => void
 }) => {
 	const server = dgram.createSocket('udp4')
@@ -27,10 +31,21 @@ export const server = ({
 			.toString()
 			.trim()
 			.split(':')
-		onMessage({
-			deviceShortId: parseInt(deviceShortId, 10),
-			message: message.join(':'),
-		})
+		const maybeParsedMessage = parseJSON(message.join(':'), toError)
+
+		if (isLeft(maybeParsedMessage)) {
+			console.error(
+				chalk.magenta('UDP Server'),
+				chalk.red('Failed to parse message as JSON!'),
+				chalk.yellow(message),
+			)
+			return
+		} else {
+			onMessage({
+				deviceShortId: parseInt(deviceShortId, 10),
+				message: maybeParsedMessage.right as { [key: string]: any },
+			})
+		}
 	})
 
 	server.on('listening', () => {
@@ -44,7 +59,7 @@ export const server = ({
 		log(chalk.magenta('closed'))
 	})
 
-	server.bind(port)
+	server.bind(typeof port === 'string' ? parseInt(port, 10) : port)
 
 	return server
 }

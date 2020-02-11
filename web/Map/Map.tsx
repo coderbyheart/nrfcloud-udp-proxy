@@ -8,7 +8,6 @@ import MapIcon from '../marker.svg'
 
 type Device = {
 	deviceId: string
-	shortId: number
 	name: string
 	geolocation?: GGAPacket
 }
@@ -80,7 +79,6 @@ export const Map = ({ proxyEndpoint }: { proxyEndpoint: string }) => {
 						...(devices.find(d => update.deviceId === d.deviceId) || {
 							deviceId: update.deviceId,
 							name: update.deviceId,
-							shortId: update.shortId,
 						}),
 						...update,
 					},
