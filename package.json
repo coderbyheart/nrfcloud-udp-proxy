@@ -82,7 +82,7 @@
       "eslint --ext .js,.ts"
     ],
     "web/*.{ts,tsx}": [
-      "eslint --ext .js,.tsx"
+      "eslint --ext .js,.tsx --parser-options {\"project\":\"./web/tsconfig.json\"}"
     ]
   },
   "engines": {
