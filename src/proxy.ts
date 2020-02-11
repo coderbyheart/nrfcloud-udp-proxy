@@ -7,6 +7,8 @@ import { device } from './device'
 import { device as AwsIotDevice } from 'aws-iot-device-sdk'
 import { server as UDPServer } from './udp-server'
 import { tryCatch, isLeft } from 'fp-ts/lib/Either'
+import { pipe } from 'fp-ts/lib/pipeable'
+import * as TE from 'fp-ts/lib/TaskEither'
 import { parseNmeaSentence, Packet } from 'nmea-simple'
 import {
 	server as WebSocketServer,
@@ -28,6 +30,25 @@ const parseJSON = (json: string) =>
 		() => new Error(`Failed to parse JSON: ${json}!`),
 	)
 
+const parseNmea = (sentence: string) =>
+	tryCatch<Error, Packet>(
+		() => parseNmeaSentence(sentence),
+		err =>
+			new Error(`Failed to parse NMEA sentence: ${(err as Error).message}!`),
+	)
+
+const fetchDevices = () =>
+	TE.tryCatch<Error, { id: string; name: string }[]>(
+		async () =>
+			fetch(`https://api.nrfcloud.com/v1/devices`, {
+				headers: {
+					Authorization: `Bearer ${apiKey}`,
+				},
+			})
+				.then(async res => res.json())
+				.then(({ items }) => items as { id: string; name: string }[]),
+		err => new Error(`Failed to fetch devices: ${(err as Error).message}!`),
+	)
 const proxy = async () => {
 	let config: {
 		deviceId: string
@@ -137,7 +158,7 @@ const proxy = async () => {
 	})
 
 	const wsConnections: WSConnection[] = []
-	const deviceLocations: {
+	const deviceGeolocations: {
 		[key: string]: Packet
 	} = {}
 
@@ -167,20 +188,40 @@ const proxy = async () => {
 						response.end()
 					})
 				break
-			case '/devices':
-				;(() => {
-					const d = deviceConnections.map(({ deviceId }, k) => ({
-						shortId: k,
-						deviceId,
-						location: deviceLocations[deviceId],
-					}))
-					const res = JSON.stringify(d)
-					response.writeHead(200, {
-						'Content-Length': res.length,
-						'Content-Type': 'application/json',
+			case '/main.js':
+				fs.promises
+					.readFile(path.join(process.cwd(), 'dist', 'main.js'), 'utf-8')
+					.then(mainJS => {
+						response.writeHead(200, {
+							'Content-Length': mainJS.length,
+							'Content-Type': 'text/javascript',
+						})
+						response.end(mainJS)
 					})
-					response.end(res)
-				})()
+					.catch(() => {
+						response.statusCode = 500
+						response.end()
+					})
+				break
+			case '/devices':
+				await pipe(
+					fetchDevices(),
+					TE.map(devices => {
+						const d = deviceConnections.map(({ deviceId }, k) => ({
+							shortId: k,
+							deviceId,
+							geolocation: deviceGeolocations[deviceId],
+							name: devices.find(({ id }) => id === deviceId)?.name || deviceId,
+						}))
+						const res = JSON.stringify(d)
+						response.writeHead(200, {
+							'Content-Length': res.length,
+							'Content-Type': 'application/json',
+							'Access-Control-Allow-Origin': '*',
+						})
+						response.end(res)
+					}),
+				)()
 				break
 			default:
 				response.statusCode = 404
@@ -245,6 +286,15 @@ const proxy = async () => {
 						),
 					)
 				})
+				if (maybeParsedMessage.right.state?.reported?.device?.networkInfo) {
+					const {
+						areaCode,
+						mccmnc,
+						cellID,
+					} = maybeParsedMessage.right.state?.reported?.device?.networkInfo
+					console.log({ areaCode, mccmnc, cellID })
+					// TODO: resolve and send location to client
+				}
 			} else {
 				const topic = `${messagesPrefix}d/${c.deviceId}/d2c`
 				c.connection.publish(topic, message)
@@ -256,17 +306,26 @@ const proxy = async () => {
 				)
 				// For the map feature we want to track the positions of all devices
 				if (maybeParsedMessage.right.appId === 'GPS') {
-					const packet = parseNmeaSentence(maybeParsedMessage.right.data)
-					if (packet.sentenceId === 'GGA') {
-						deviceLocations[c.deviceId] = packet
-						wsConnections.forEach(wsConnection => {
-							wsConnection.send(
-								JSON.stringify({
-									deviceId: c.deviceId,
-									...packet,
-								}),
-							)
-						})
+					const maybePacket = parseNmea(maybeParsedMessage.right.data)
+					if (isLeft(maybePacket)) {
+						console.error(
+							chalk.magenta('UDP Server'),
+							chalk.red(maybePacket.left.message),
+						)
+					} else {
+						const packet = maybePacket.right
+						if (packet.sentenceId === 'GGA') {
+							deviceGeolocations[c.deviceId] = packet
+							wsConnections.forEach(wsConnection => {
+								wsConnection.send(
+									JSON.stringify({
+										shortId: deviceShortId,
+										deviceId: c.deviceId,
+										geolocation: packet,
+									}),
+								)
+							})
+						}
 					}
 				}
 			}

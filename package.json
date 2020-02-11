@@ -4,7 +4,10 @@
   "description": "A proxy for devices that need to send data using UDP to nRF Connect for Cloud",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node dist/proxy.js"
+    "start": "node dist/proxy.js",
+    "build": "npx webpack --config-name production",
+    "map": "webpack-dev-server --config-name development --open",
+    "lint": "eslint --ext .js,.ts,.tsx src/**"
   },
   "repository": {
     "type": "git",
@@ -22,10 +25,15 @@
   },
   "homepage": "https://github.com/coderbyheart/nrfcloud-udp-proxy#readme",
   "dependencies": {
-    "aws-sdk": "^2.614.0",
+    "@types/react-dom": "^16.9.5",
+    "aws-sdk": "^2.615.0",
     "chalk": "^3.0.0",
+    "leaflet": "^1.6.0",
     "nmea-simple": "^3.0.0",
     "node-fetch": "^2.6.0",
+    "react": "^16.12.0",
+    "react-dom": "^16.12.0",
+    "react-leaflet": "^2.6.1",
     "uuid": "^3.4.0",
     "websocket": "^1.0.31"
   },
@@ -38,13 +46,24 @@
     "@types/chalk": "^2.2.0",
     "@types/node": "^13.7.0",
     "@types/node-fetch": "^2.5.4",
+    "@types/react": "^16.9.19",
+    "@types/react-leaflet": "^2.5.0",
+    "@types/styled-components": "^4.4.2",
     "@types/uuid": "^3.4.7",
     "@types/websocket": "^1.0.0",
     "aws-iot-device-sdk": "^2.2.3",
     "forever": "^2.0.0",
     "fp-ts": "^2.4.4",
     "husky": "^4.2.1",
-    "typescript": "^3.7.5"
+    "react-svg-loader": "^3.0.3",
+    "source-map-loader": "^0.2.4",
+    "styled-components": "^5.0.1",
+    "svg-inline-loader": "^0.8.0",
+    "ts-loader": "^6.2.1",
+    "typescript": "^3.7.5",
+    "webpack": "^4.41.5",
+    "webpack-cli": "^3.3.10",
+    "webpack-dev-server": "^3.10.2"
   },
   "husky": {
     "hooks": {
@@ -57,8 +76,13 @@
       "prettier --write"
     ],
     "*.{ts,tsx}": [
-      "prettier --write",
+      "prettier --write"
+    ],
+    "src/*.ts": [
       "eslint --ext .js,.ts"
+    ],
+    "web/*.{ts,tsx}": [
+      "eslint --ext .js,.tsx"
     ]
   },
   "engines": {

@@ -52,6 +52,7 @@ These examples use netcat to send UDP messages for device `2` to the proxy:
     # Authenticate against GitHub: echo "//npm.pkg.github.com/:_authToken=${GITHUB_TOKEN}" > ~/.npmrc
     npm ci
     npx tsc
+    npm run build
     npx forever dist/proxy.js
 
 ### using Docker
