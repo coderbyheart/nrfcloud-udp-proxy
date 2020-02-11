@@ -22,15 +22,26 @@ export const server = ({
 	})
 
 	server.on('message', (msg, info) => {
+		const parts = msg
+			.toString()
+			.trim()
+			.split(':')
+		if (parts.length >= 2) {
+			console.log(
+				chalk.magenta('UDP Server'),
+				chalk.red('Dropping invalid message'),
+				chalk.yellow(msg),
+			)
+			return
+		}
 		log(
 			chalk.blue('<'),
 			chalk.cyan(`${info.address}:${info.port}`),
 			chalk.yellow(msg.toString().trim()),
 		)
-		const [deviceShortId, ...message] = msg
-			.toString()
-			.trim()
-			.split(':')
+
+		const [deviceShortId, ...message] = parts
+
 		const maybeParsedMessage = parseJSON(message.join(':'), toError)
 
 		if (isLeft(maybeParsedMessage)) {
