@@ -1,4 +1,3 @@
-import * as path from 'path'
 import * as http from 'http'
 
 const greenlockExpress = require('greenlock-express')
@@ -10,29 +9,27 @@ export const createHTTPSUiServer = async ({
 	handler,
 	maintainerEmail,
 	dataDir,
+	log,
 }: {
 	handler: http.RequestListener
 	maintainerEmail: string
 	dataDir: string
+	log: (...args: any[]) => void
 }): Promise<http.Server> =>
 	new Promise(resolve => {
 		greenlockExpress
 			.init({
+				packageRoot: dataDir,
 				maintainerEmail,
-				configDir: path.join(dataDir, 'letsencrypt'),
+				configDir: './letsencrypt',
 				securityUpdates: false,
 				cluster: false,
 				packageAgent: 'nrfcloud-udp-proxy/1.0',
+				notify: log,
 			})
 			.ready((glx: any) => {
-				const httpServer = glx.httpServer(
-					(req: http.IncomingMessage, res: http.ServerResponse) => {
-						console.log(req)
-						res.writeHead(404)
-						res.end()
-					},
-				)
+				const httpServer = glx.httpServer()
 				httpServer.listen(80)
-				resolve(glx.http2Server(handler))
+				resolve(glx.http2Server({}, handler))
 			})
 	})

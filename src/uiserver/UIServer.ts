@@ -36,7 +36,13 @@ export const UIServer = async ({
 
 	const uiServer =
 		httpPort === 443
-			? await createHTTPSUiServer({ handler: h, maintainerEmail, dataDir })
+			? await createHTTPSUiServer({
+					handler: h,
+					maintainerEmail,
+					dataDir,
+					log: (...args: any[]) =>
+						console.log(chalk.green(' HTTPS '), ...args.map(chalk.grey)),
+			  })
 			: await createHTTPUiServer({ handler: h })
 
 	const wsConnections: WSConnection[] = []
