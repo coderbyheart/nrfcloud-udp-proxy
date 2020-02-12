@@ -22,6 +22,7 @@ export const createHTTPSUiServer = async ({
 				configDir: path.join(dataDir, 'letsencrypt'),
 				securityUpdates: false,
 				cluster: false,
+				packageAgent: 'nrfcloud-udp-proxy/1.0',
 			})
 			.ready((glx: any) => {
 				const httpServer = glx.httpServer(
