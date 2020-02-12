@@ -28,6 +28,7 @@
     "@types/react-dom": "^16.9.5",
     "aws-sdk": "^2.616.0",
     "chalk": "^3.0.0",
+    "greenlock-express": "^4.0.3",
     "leaflet": "^1.6.0",
     "nmea-simple": "^3.0.0",
     "node-fetch": "^2.6.0",

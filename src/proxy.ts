@@ -4,7 +4,7 @@ import { device as AwsIotDevice } from 'aws-iot-device-sdk'
 import { server as UDPServer } from './udp-server'
 import { isLeft } from 'fp-ts/lib/Either'
 import { parseNmea } from './nmea'
-import { UIServer } from './UIServer'
+import { UIServer } from './uiserver/UIServer'
 import { initConfig } from './config'
 import { describeAccount } from './nrfcloud'
 
@@ -16,11 +16,12 @@ export type DeviceConnection = {
 
 const dataDir = process.env.DATA_DIR || process.cwd()
 const apiKey = process.env.API_KEY || ''
-const port = process.env.PORT || 8888
-const httpPort = process.env.HTTP_PORT || 8080
+const port = process.env.PORT || '8888'
+const httpPort = process.env.HTTP_PORT || '8080'
 const deviceCount = process.env.DEVICE_COUNT
 	? parseInt(process.env.DEVICE_COUNT, 10)
 	: 3
+const adminEmail = process.env.ADMIN_EMAIL || ''
 
 const proxy = async () => {
 	const { config, updateConfig } = await initConfig({
@@ -79,10 +80,12 @@ const proxy = async () => {
 	})
 
 	// Start UI server
-	const uiServer = UIServer({
+	const uiServer = await UIServer({
 		apiKey,
-		httpPort,
+		httpPort: parseInt(httpPort, 10),
 		deviceConnections,
+		dataDir,
+		maintainerEmail: adminEmail,
 	})
 
 	UDPServer({
