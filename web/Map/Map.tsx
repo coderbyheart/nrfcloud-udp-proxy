@@ -82,7 +82,7 @@ export const Map = ({ proxyEndpoint }: { proxyEndpoint: string }) => {
 	}, [proxyEndpoint])
 
 	useEffect(() => {
-		const connection = new WebSocket(proxyEndpoint.replace(/^https?/, 'ws'))
+		const connection = new WebSocket(proxyEndpoint.replace(/^http/, 'ws'))
 		connection.onopen = () => {
 			console.debug('[ws]', 'open')
 		}
