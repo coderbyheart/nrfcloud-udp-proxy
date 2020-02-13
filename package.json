@@ -55,7 +55,7 @@
     "aws-iot-device-sdk": "^2.2.3",
     "forever": "^2.0.0",
     "fp-ts": "^2.4.4",
-    "husky": "^4.2.2",
+    "husky": "^4.2.3",
     "react-svg-loader": "^3.0.3",
     "source-map-loader": "^0.2.4",
     "styled-components": "^5.0.1",
