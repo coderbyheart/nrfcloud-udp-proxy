@@ -1,5 +1,11 @@
 import React, { createRef, useState, useEffect } from 'react'
-import { Map as LeafletMap, TileLayer, Marker, Popup } from 'react-leaflet'
+import {
+	Map as LeafletMap,
+	TileLayer,
+	Marker,
+	Popup,
+	Circle,
+} from 'react-leaflet'
 import * as L from 'leaflet'
 import { createGlobalStyle } from 'styled-components'
 import { GGAPacket } from 'nmea-simple'
@@ -10,8 +16,27 @@ type Device = {
 	deviceId: string
 	name: string
 	geolocation?: GGAPacket
+	cellGeolocation?: {
+		lat: number
+		lng: number
+		accuracy: number
+		ts: string
+	}
 	temp?: number
 }
+
+const colors = [
+	'#03a8a0',
+	'#039c4b',
+	'#66d313',
+	'#fedf17',
+	'#ff0984',
+	'#21409a',
+	'#04adff',
+	'#e48873',
+	'#f16623',
+	'#f44546',
+]
 
 const CustomIconStyle = createGlobalStyle`
 	.thingyIcon {
@@ -33,36 +58,7 @@ const CustomIconStyle = createGlobalStyle`
 			margin-left: 15px;
 		}
 	}
-	.thingy0 {
-		color: #03a8a0;
-	}
-	.thingy1 {
-		color: #039c4b;
-	}
-	.thingy2 {
-		color: #66d313;
-	}
-	.thingy3 {
-		color: #fedf17;
-	}
-	.thingy4 {
-		color: #ff0984;
-	}
-	.thingy5 {
-		color: #21409a;
-	}
-	.thingy6 {
-		color: #04adff;
-	}
-	.thingy7 {
-		color: #e48873;
-	}
-	.thingy8 {
-		color: #f16623;
-	}
-	.thingy9 {
-		color: #f44546;
-	}
+	${colors.map((c, k) => `.thingy${k} { color: ${c}; }`)}
 `
 
 export const Map = ({ proxyEndpoint }: { proxyEndpoint: string }) => {
@@ -92,7 +88,7 @@ export const Map = ({ proxyEndpoint }: { proxyEndpoint: string }) => {
 		connection.onmessage = message => {
 			console.debug('[ws]', 'message', message)
 			const update = JSON.parse(message.data)
-			if ('geolocation' in update) {
+			if ('geolocation' in update || 'cellGeolocation' in update) {
 				updateDevices(devices => [
 					...devices.filter(d => update.deviceId !== d.deviceId),
 					{
@@ -127,7 +123,8 @@ export const Map = ({ proxyEndpoint }: { proxyEndpoint: string }) => {
 
 	return (
 		<LeafletMap
-			center={[63.4210966, 10.4378928]}
+			// center={[63.4210966, 10.4378928]}
+			center={[61.366447, 5.398771]}
 			zoom={zoom}
 			ref={mapRef}
 			onzoomend={() => {
@@ -148,37 +145,58 @@ export const Map = ({ proxyEndpoint }: { proxyEndpoint: string }) => {
 				attribution='&amp;copy <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
 				url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
 			/>
-			{devices
-				.filter(({ geolocation }) => geolocation)
-				.map(({ geolocation, name, deviceId, temp }, k) => {
-					const pos = {
-						lat: (geolocation as GGAPacket).latitude,
-						lng: (geolocation as GGAPacket).longitude,
+			{devices.map(
+				({ cellGeolocation, geolocation, name, deviceId, temp }, k) => {
+					if (!geolocation && !cellGeolocation) return null
+					console.log(geolocation)
+					const geolocationTime = geolocation?.time
+						? new Date(geolocation.time).getTime()
+						: 0
+					const cellGeolocationTime = cellGeolocation?.ts
+						? new Date(cellGeolocation.ts).getTime()
+						: 0
+
+					let markerPos = (geolocation
+						? { lat: geolocation.latitude, lng: geolocation.longitude }
+						: cellGeolocation) as { lat: number; lng: number }
+
+					if (cellGeolocation && cellGeolocationTime > geolocationTime) {
+						markerPos = cellGeolocation
 					}
+
 					return (
-						<Marker
-							icon={L.divIcon({
-								className: `thingyIcon thingy${k}`,
-								iconSize: [60, 65],
-								iconAnchor: [30, 65],
-								popupAnchor: [0, -55],
-								html: `<span>${temp ? `${temp}°C` : ''}</span>${MapIcon}`,
-							})}
-							position={pos}
-							key={k}
-						>
-							<Popup>
-								<a
-									href={`https://nrfcloud.com/#/devices/${deviceId}`}
-									target="_blank"
-									rel="noopener nofollow"
-								>
-									{name}
-								</a>
-							</Popup>
-						</Marker>
+						<React.Fragment key={k}>
+							{cellGeolocation && (
+								<Circle
+									center={cellGeolocation}
+									radius={cellGeolocation.accuracy}
+									color={colors[k]}
+								/>
+							)}
+							<Marker
+								icon={L.divIcon({
+									className: `thingyIcon thingy${k}`,
+									iconSize: [60, 65],
+									iconAnchor: [30, 65],
+									popupAnchor: [0, -55],
+									html: `<span>${temp ? `${temp}°C` : ''}</span>${MapIcon}`,
+								})}
+								position={markerPos}
+							>
+								<Popup>
+									<a
+										href={`https://nrfcloud.com/#/devices/${deviceId}`}
+										target="_blank"
+										rel="noopener nofollow"
+									>
+										{name}
+									</a>
+								</Popup>
+							</Marker>
+						</React.Fragment>
 					)
-				})}
+				},
+			)}
 		</LeafletMap>
 	)
 }

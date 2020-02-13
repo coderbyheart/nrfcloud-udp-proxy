@@ -100,7 +100,7 @@ export const UIServer = async ({
 		sendDeviceUpdate: (device: DeviceConnection, update: any) => {
 			updateClients({
 				deviceId: device.deviceId,
-				update: update,
+				...update,
 			})
 		},
 	}

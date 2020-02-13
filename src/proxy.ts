@@ -2,11 +2,14 @@ import * as chalk from 'chalk'
 import { device } from './device'
 import { device as AwsIotDevice } from 'aws-iot-device-sdk'
 import { server as UDPServer } from './udp-server'
-import { isLeft } from 'fp-ts/lib/Either'
 import { parseNmea } from './nmea'
 import { UIServer } from './uiserver/UIServer'
 import { initConfig } from './config'
 import { describeAccount } from './nrfcloud'
+import { resolveCellGeolocation } from './unwiredlabs'
+import { mapLeft, map } from 'fp-ts/lib/TaskEither'
+import { pipe } from 'fp-ts/lib/pipeable'
+import { isLeft } from 'fp-ts/lib/Either'
 
 export type DeviceConnection = {
 	connection: AwsIotDevice
@@ -22,6 +25,25 @@ const deviceCount = process.env.DEVICE_COUNT
 	? parseInt(process.env.DEVICE_COUNT, 10)
 	: 3
 const adminEmail = process.env.ADMIN_EMAIL || ''
+
+const memoize = <R, T extends (...args: any[]) => R>(f: T): T => {
+	const memory = new Map<string, R>()
+	const g = (...args: any[]) => {
+		if (!memory.get(args.join())) {
+			memory.set(args.join(), f(...args))
+		}
+		return memory.get(args.join())
+	}
+	return g as T
+}
+
+const cellgeolocationResolver = memoize(
+	resolveCellGeolocation({
+		apiKey: process.env.UNWIREDLABS_API_KEY || '',
+		endpoint:
+			process.env.UNWIREDLABS_ENDPOINT || 'https://eu1.unwiredlabs.com/',
+	}),
+)
 
 const proxy = async () => {
 	const { config, updateConfig } = await initConfig({
@@ -91,7 +113,7 @@ const proxy = async () => {
 	UDPServer({
 		port,
 		log: (...args) => console.log(chalk.magenta('UDP Server'), ...args),
-		onMessage: ({ deviceShortId, message }) => {
+		onMessage: async ({ deviceShortId, message }) => {
 			const c = deviceConnections[deviceShortId]
 			if (!c) {
 				console.error(
@@ -110,13 +132,38 @@ const proxy = async () => {
 					)
 				})
 				if (message.state?.reported?.device?.networkInfo) {
-					const {
-						areaCode,
-						mccmnc,
-						cellID,
-					} = message.state?.reported?.device?.networkInfo
-					console.log({ areaCode, mccmnc, cellID })
-					// TODO: resolve and send location to client
+					const cellQuery = {
+						mccmnc: parseInt(
+							message.state?.reported?.device?.networkInfo?.mccmnc,
+							10,
+						),
+						areaCode: message.state?.reported?.device?.networkInfo?.areaCode,
+						cellID: message.state?.reported?.device?.networkInfo?.cellID,
+					}
+					pipe(
+						cellgeolocationResolver(cellQuery),
+						map(cellGeolocation => {
+							console.log(
+								chalk.bgBlue(' Cell Geolocation '),
+								chalk.grey('located cell'),
+								chalk.blue(JSON.stringify(cellQuery)),
+								chalk.grey('at'),
+								chalk.blueBright(JSON.stringify(cellGeolocation)),
+							)
+							uiServer.sendDeviceUpdate(c, {
+								cellGeolocation: {
+									...cellGeolocation,
+									ts: new Date().toISOString(),
+								},
+							})
+						}),
+						mapLeft(error => {
+							console.error(
+								chalk.bgBlue(' Cell Geolocation '),
+								chalk.red(error.message),
+							)
+						}),
+					)()
 				}
 			} else {
 				const topic = `${messagesPrefix}d/${c.deviceId}/d2c`
@@ -145,7 +192,9 @@ const proxy = async () => {
 					}
 				} else if (message.appId === 'TEMP') {
 					// send everything else verbatim
-					uiServer.sendDeviceUpdate(c, message)
+					uiServer.sendDeviceUpdate(c, {
+						update: message,
+					})
 				}
 			}
 		},
