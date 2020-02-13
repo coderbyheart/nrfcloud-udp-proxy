@@ -29,36 +29,52 @@ export const handler = ({
 		response.end()
 		return
 	}
+
+	const returnFile = ({ folder }: { folder: string }) => ({
+		response,
+		file,
+		type,
+	}: {
+		file: string
+		response: http.ServerResponse
+		type: string
+	}) =>
+		fs.promises
+			.readFile(path.join(folder, file), 'utf-8')
+			.then(data => {
+				response.writeHead(200, {
+					'Content-Length': data.length,
+					'Content-Type': type,
+				})
+				response.end(data)
+			})
+			.catch(() => {
+				response.statusCode = 500
+				response.end()
+			})
+
+	const returnWebFile = returnFile({ folder: path.join(process.cwd(), 'web') })
+	const returnDistFile = returnFile({
+		folder: path.join(process.cwd(), 'dist'),
+	})
+	const returnFaviconFile = returnFile({
+		folder: path.join(process.cwd(), 'favicon'),
+	})
+
 	switch (request.url) {
 		case '/':
-			fs.promises
-				.readFile(path.join(process.cwd(), 'web', 'index.html'), 'utf-8')
-				.then(index => {
-					response.writeHead(200, {
-						'Content-Length': index.length,
-						'Content-Type': 'text/html',
-					})
-					response.end(index)
-				})
-				.catch(() => {
-					response.statusCode = 500
-					response.end()
-				})
+			returnWebFile({
+				response,
+				file: 'index.html',
+				type: 'text/html',
+			})
 			break
 		case '/main.js':
-			fs.promises
-				.readFile(path.join(process.cwd(), 'dist', 'main.js'), 'utf-8')
-				.then(mainJS => {
-					response.writeHead(200, {
-						'Content-Length': mainJS.length,
-						'Content-Type': 'text/javascript',
-					})
-					response.end(mainJS)
-				})
-				.catch(() => {
-					response.statusCode = 500
-					response.end()
-				})
+			returnDistFile({
+				response,
+				file: 'main.js',
+				type: 'text/javascript',
+			})
 			break
 		case '/devices':
 			await pipe(
@@ -79,6 +95,13 @@ export const handler = ({
 					response.end(res)
 				}),
 			)()
+			break
+		case '/favicon.ico':
+			returnFaviconFile({
+				response,
+				file: 'favicon.ico',
+				type: 'image/x-icon',
+			})
 			break
 		default:
 			response.statusCode = 404
