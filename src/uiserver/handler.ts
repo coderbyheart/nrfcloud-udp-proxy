@@ -57,9 +57,6 @@ export const handler = ({
 	const returnDistFile = returnFile({
 		folder: path.join(process.cwd(), 'dist'),
 	})
-	const returnFaviconFile = returnFile({
-		folder: path.join(process.cwd(), 'favicon'),
-	})
 
 	switch (request.url) {
 		case '/':
@@ -97,7 +94,7 @@ export const handler = ({
 			)()
 			break
 		case '/favicon.ico':
-			returnFaviconFile({
+			returnWebFile({
 				response,
 				file: 'favicon.ico',
 				type: 'image/x-icon',
