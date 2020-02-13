@@ -143,7 +143,7 @@ const proxy = async () => {
 							uiServer.updateDeviceGeoLocation(c, packet)
 						}
 					}
-				} else {
+				} else if (message.appId === 'TEMP') {
 					// send everything else verbatim
 					uiServer.sendDeviceUpdate(c, message)
 				}
