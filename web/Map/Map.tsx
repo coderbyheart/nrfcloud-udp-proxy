@@ -148,7 +148,6 @@ export const Map = ({ proxyEndpoint }: { proxyEndpoint: string }) => {
 			{devices.map(
 				({ cellGeolocation, geolocation, name, deviceId, temp }, k) => {
 					if (!geolocation && !cellGeolocation) return null
-					console.log(geolocation)
 					const geolocationTime = geolocation?.time
 						? new Date(geolocation.time).getTime()
 						: 0
