@@ -61,6 +61,20 @@ const CustomIconStyle = createGlobalStyle`
 	${colors.map((c, k) => `.thingy${k} { color: ${c}; }`)}
 `
 
+const debugWs = (...args: any[]) =>
+	console.debug(
+		'%c WebSocket ',
+		'background-color: #d4de2f; color: #333333; padding: 0.25rem;',
+		...args,
+	)
+
+const errorWs = (...args: any[]) =>
+	console.error(
+		'%c WebSocket ',
+		'background-color: #de402f; color: #ffffff; padding: 0.25rem;',
+		...args,
+	)
+
 export const Map = ({ proxyEndpoint }: { proxyEndpoint: string }) => {
 	let zoom = 13
 	const userZoom = window.localStorage.getItem('map:zoom')
@@ -80,14 +94,14 @@ export const Map = ({ proxyEndpoint }: { proxyEndpoint: string }) => {
 	useEffect(() => {
 		const connection = new WebSocket(proxyEndpoint.replace(/^http/, 'ws'))
 		connection.onopen = () => {
-			console.debug('[ws]', 'open')
+			debugWs('open')
 		}
 		connection.onerror = error => {
-			console.error('[ws]', error)
+			errorWs(error)
 		}
 		connection.onmessage = message => {
-			console.debug('[ws]', 'message', message)
 			const update = JSON.parse(message.data)
+			debugWs(update)
 			if ('geolocation' in update || 'cellGeolocation' in update) {
 				updateDevices(devices => [
 					...devices.filter(d => update.deviceId !== d.deviceId),
