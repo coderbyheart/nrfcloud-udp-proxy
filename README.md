@@ -52,6 +52,7 @@ These examples use netcat to send UDP messages for device `2` to the proxy:
 
     export GITHUB_TOKEN=<a github token with needs registry read access>
     export API_KEY=<your nrfcloud.com API key>
+    export UNWIREDLABS_API_KEY=<your unwiredlabs.com API key>
 
 ### using Node.js
 
@@ -59,7 +60,8 @@ These examples use netcat to send UDP messages for device `2` to the proxy:
     npm ci
     npx tsc
     npm run build
-    npx forever dist/proxy.js
+    npm start # start the proxy
+    npm run map # open the development server for the ThingyWorld
 
 ### using Docker
 
