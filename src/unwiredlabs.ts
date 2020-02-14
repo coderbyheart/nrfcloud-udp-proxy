@@ -1,7 +1,7 @@
 import fetch from 'node-fetch'
 import * as TE from 'fp-ts/lib/TaskEither'
 
-type Location = {
+export type Location = {
 	lat: number
 	lng: number
 	accuracy: number

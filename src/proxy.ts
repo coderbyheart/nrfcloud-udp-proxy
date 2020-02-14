@@ -150,12 +150,7 @@ const proxy = async () => {
 								chalk.grey('at'),
 								chalk.blueBright(JSON.stringify(cellGeolocation)),
 							)
-							uiServer.sendDeviceUpdate(c, {
-								cellGeolocation: {
-									...cellGeolocation,
-									ts: new Date().toISOString(),
-								},
-							})
+							uiServer.updateDeviceCellGeoLocation(c, cellGeolocation)
 						}),
 						mapLeft(error => {
 							console.error(

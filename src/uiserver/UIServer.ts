@@ -8,9 +8,14 @@ import { Packet } from 'nmea-simple'
 import { handler } from './handler'
 import { createHTTPSUiServer } from './https'
 import { createHTTPUiServer } from './http'
+import { Location } from '../unwiredlabs'
 
-type DeviceGeoLocations = {
+export type DeviceGeolocations = {
 	[key: string]: Packet
+}
+
+export type DeviceCellGeolocations = {
+	[key: string]: Location
 }
 
 export const UIServer = async ({
@@ -26,10 +31,12 @@ export const UIServer = async ({
 	dataDir: string
 	maintainerEmail: string
 }) => {
-	const deviceGeolocations: DeviceGeoLocations = {}
+	const deviceGeolocations: DeviceGeolocations = {}
+	const deviceCellGeolocations: DeviceCellGeolocations = {}
 
 	const h = handler({
 		deviceGeolocations,
+		deviceCellGeolocations,
 		apiKey,
 		deviceConnections,
 	})
@@ -95,6 +102,19 @@ export const UIServer = async ({
 			updateClients({
 				deviceId: device.deviceId,
 				geolocation: geolocation,
+			})
+		},
+		updateDeviceCellGeoLocation: (
+			device: DeviceConnection,
+			cellGeolocation: Location,
+		) => {
+			deviceCellGeolocations[device.deviceId] = cellGeolocation
+			updateClients({
+				deviceId: device.deviceId,
+				cellGeolocation: {
+					...cellGeolocation,
+					ts: new Date().toISOString(),
+				},
 			})
 		},
 		sendDeviceUpdate: (device: DeviceConnection, update: any) => {

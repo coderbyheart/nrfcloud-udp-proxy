@@ -5,20 +5,18 @@ import { fetchDevices } from '../nrfcloud'
 import { pipe } from 'fp-ts/lib/pipeable'
 import { DeviceConnection } from '../proxy'
 import * as TE from 'fp-ts/lib/TaskEither'
-import { Packet } from 'nmea-simple'
-
-type DeviceGeoLocations = {
-	[key: string]: Packet
-}
+import { DeviceCellGeolocations, DeviceGeolocations } from './UIServer'
 
 export const handler = ({
 	apiKey,
 	deviceConnections,
 	deviceGeolocations,
+	deviceCellGeolocations,
 }: {
 	apiKey: string
 	deviceConnections: DeviceConnection[]
-	deviceGeolocations: DeviceGeoLocations
+	deviceGeolocations: DeviceGeolocations
+	deviceCellGeolocations: DeviceCellGeolocations
 }): http.RequestListener => async (request, response) => {
 	if (request.method === 'OPTIONS') {
 		response.writeHead(200, {
@@ -81,6 +79,7 @@ export const handler = ({
 						shortId: k,
 						deviceId,
 						geolocation: deviceGeolocations[deviceId],
+						cellGeolocation: deviceCellGeolocations[deviceId],
 						name: devices.find(({ id }) => id === deviceId)?.name || deviceId,
 					}))
 					const res = JSON.stringify(d)
