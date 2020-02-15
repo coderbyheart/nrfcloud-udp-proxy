@@ -29,10 +29,11 @@ const adminEmail = process.env.ADMIN_EMAIL || ''
 const memoize = <R, T extends (...args: any[]) => R>(f: T): T => {
 	const memory = new Map<string, R>()
 	const g = (...args: any[]) => {
-		if (!memory.get(args.join())) {
-			memory.set(args.join(), f(...args))
+		const hash = JSON.stringify(args)
+		if (!memory.get(hash)) {
+			memory.set(hash, f(...args))
 		}
-		return memory.get(args.join())
+		return memory.get(hash)
 	}
 	return g as T
 }
