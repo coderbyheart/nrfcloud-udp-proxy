@@ -23,6 +23,7 @@ type Device = {
 		ts: string
 	}
 	temp?: number
+	airQuality?: number
 }
 
 const colors = [
@@ -38,27 +39,49 @@ const colors = [
 	'#f44546',
 ]
 
+const airQualityColors = {
+	A: '#00e400',
+	B: '#92d050',
+	C: '#ffff00',
+	D: '#ff7e00',
+	E: '#ff0000',
+	F: '#99004c',
+	G: '#663300',
+}
+
 const CustomIconStyle = createGlobalStyle`
 	.thingyIcon {
-		span {
+		div.label {
 			width: 100%;
 			text-align: center;
 			color: #000000fa;
+			font-weight: bold;
 			display: block;
-			height: 20px;
+			height: 40px;
 			overflow: hidden;
 			white-space:nowrap;
-			text-shadow: 1px 1px 1px #fff, -1px 1px 1px #fff, 1px -1px 1px #fff, -1px -1px 1px #fff;
 			display: flex;
-    		align-items: flex-end;
-			justify-content: center;
+    		align-items: center;
+    		flex-direction: column;
+			justify-content: flex-end;
+			span.temp {
+				text-shadow: 1px 1px 1px #fff, -1px 1px 1px #fff, 1px -1px 1px #fff, -1px -1px 1px #fff;
+			}
+			span.airquality {
+			}
+			${Object.entries(airQualityColors).map(
+				([k, c]) => `.airquality-${k} { 
+					text-shadow: 1px 1px 2px ${c}, -1px 1px 2px ${c}, 1px -1px 2px ${c}, -1px -1px 2px ${c};
+				 }`,
+			)}
 		}
 		svg {
 			width: 30px;
-			margin-left: 15px;
+			margin-left: 45px;
 		}
 	}
 	${colors.map((c, k) => `.thingy${k} { color: ${c}; }`)}
+	
 `
 
 const debugWs = (...args: any[]) =>
@@ -74,6 +97,26 @@ const errorWs = (...args: any[]) =>
 		'background-color: #de402f; color: #ffffff; padding: 0.25rem;',
 		...args,
 	)
+
+/**
+ * @see https://ae-bst.resource.bosch.com/media/_tech/media/datasheets/BST-BME680-DS001.pdf
+ */
+const describeAirQuality = (
+	airQuality: number,
+): { rating: string; description: string } => {
+	if (airQuality > 351)
+		return {
+			description: 'Extremely polluted',
+			rating: 'G',
+		}
+	if (airQuality > 250) return { description: 'Severely polluted', rating: 'F' }
+	if (airQuality > 200) return { description: 'Heavily polluted', rating: 'E' }
+	if (airQuality > 150)
+		return { description: 'Moderately polluted', rating: 'D' }
+	if (airQuality > 100) return { description: 'Lightly polluted', rating: 'C' }
+	if (airQuality > 50) return { description: 'Good', rating: 'B' }
+	return { description: 'Excellent', rating: 'A' }
+}
 
 export const Map = ({ proxyEndpoint }: { proxyEndpoint: string }) => {
 	let zoom = 13
@@ -130,6 +173,20 @@ export const Map = ({ proxyEndpoint }: { proxyEndpoint: string }) => {
 							},
 						]
 					})
+				} else if (appId === 'AIR_QUAL') {
+					updateDevices(devices => {
+						const d = devices.find(d => update.deviceId === d.deviceId)
+						if (!d) {
+							return devices
+						}
+						return [
+							...devices.filter(d => update.deviceId !== d.deviceId),
+							{
+								...d,
+								airQuality: parseFloat(data),
+							},
+						]
+					})
 				}
 			}
 		}
@@ -175,7 +232,10 @@ export const Map = ({ proxyEndpoint }: { proxyEndpoint: string }) => {
 				url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
 			/>
 			{devices.map(
-				({ cellGeolocation, geolocation, name, deviceId, temp }, k) => {
+				(
+					{ cellGeolocation, geolocation, name, deviceId, temp, airQuality },
+					k,
+				) => {
 					if (!geolocation && !cellGeolocation) return null
 					const geolocationTime = geolocation?.time
 						? new Date(geolocation.time).getTime()
@@ -205,14 +265,25 @@ export const Map = ({ proxyEndpoint }: { proxyEndpoint: string }) => {
 							<Marker
 								icon={L.divIcon({
 									className: `thingyIcon thingy${k}`,
-									iconSize: [60, 65],
-									iconAnchor: [30, 65],
-									popupAnchor: [0, -55],
-									html: `<span>${temp ? `${temp}°C` : ''}</span>${MapIcon}`,
+									iconSize: [120, 85],
+									iconAnchor: [90, 85],
+									popupAnchor: [-30, -40],
+									html: `<div class="label">
+									${temp ? `<span class="temp">${temp}°C</span>` : ''}
+									${
+										airQuality
+											? `<span class="airquality airquality-${
+													describeAirQuality(airQuality).rating
+											  }">${describeAirQuality(airQuality).description}</span>`
+											: ''
+									}
+									</div>
+									${MapIcon}`,
 								})}
 								position={markerPos}
 							>
 								<Popup>
+									Device:{' '}
 									<a
 										href={`https://nrfcloud.com/#/devices/${deviceId}`}
 										target="_blank"
@@ -220,6 +291,27 @@ export const Map = ({ proxyEndpoint }: { proxyEndpoint: string }) => {
 									>
 										{name}
 									</a>
+									<br />
+									{temp && (
+										<>
+											Temperature: {temp}°C
+											<br />
+										</>
+									)}
+									{airQuality && (
+										<>
+											<a
+												href="https://blog.nordicsemi.com/getconnected/bosch-sensortec-bme680-the-nose-of-nordics-thingy91"
+												target="_blank"
+												rel="noopener nofollow"
+											>
+												Air Quality
+											</a>
+											: {describeAirQuality(airQuality).description} (
+											{airQuality})
+											<br />
+										</>
+									)}
 								</Popup>
 							</Marker>
 						</React.Fragment>
