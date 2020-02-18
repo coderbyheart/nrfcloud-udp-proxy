@@ -275,8 +275,8 @@ export const Map = ({ proxyEndpoint }: { proxyEndpoint: string }) => {
 								icon={L.divIcon({
 									className: `thingyIcon thingy${k}`,
 									iconSize: [120, 85],
-									iconAnchor: [90, 85],
-									popupAnchor: [-30, -40],
+									iconAnchor: [60, 85],
+									popupAnchor: [0, -40],
 									html: `<div class="label">
 									${temp ? `<span class="temp">${temp}°C</span>` : ''}
 									${
