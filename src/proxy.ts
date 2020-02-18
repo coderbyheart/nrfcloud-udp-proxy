@@ -58,7 +58,7 @@ const proxy = async () => {
 	// Connect all devices
 	const deviceConnections = [] as DeviceConnection[]
 
-	config.forEach((deviceConfig, deviceShortId) => {
+	Object.entries(config).forEach(([deviceShortId, deviceConfig]) => {
 		const {
 			deviceId,
 			caCert,

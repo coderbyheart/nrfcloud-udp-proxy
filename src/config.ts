@@ -5,13 +5,15 @@ import { v4 } from 'uuid'
 import fetch from 'node-fetch'
 
 export type Config = {
-	deviceId: string
-	ownershipCode: string
-	caCert: string
-	privateKey: string
-	clientCert: string
-	associated?: boolean
-}[]
+	[key: string]: {
+		deviceId: string
+		ownershipCode: string
+		caCert: string
+		privateKey: string
+		clientCert: string
+		associated?: boolean
+	}
+}
 
 export const writeConfig = (configFile: string) => (config: Config) =>
 	fs.writeFileSync(configFile, JSON.stringify(config, null, 2), 'utf-8')
@@ -33,11 +35,11 @@ export const initConfig = async ({
 		config = JSON.parse(fs.readFileSync(configFile, 'utf-8').toString())
 	} catch {
 		console.log(chalk.yellow('No configuration found, creating...'))
-		config = []
+		config = {}
 	}
 
 	// If not enough devices, create new devices
-	while (config.length < deviceCount) {
+	while (Object.entries(config).length < deviceCount) {
 		const deviceId = v4()
 		const ownershipCode = v4()
 		const res = await fetch(
@@ -51,14 +53,19 @@ export const initConfig = async ({
 			},
 		)
 		const { caCert, privateKey, clientCert } = await res.json()
-		config.push({
+		const addr = `${Object.entries(config).length}`
+		config[addr] = {
 			deviceId,
 			ownershipCode,
 			caCert,
 			privateKey,
 			clientCert,
-		})
-		console.log(chalk.green('New device created:'), chalk.cyan(deviceId))
+		}
+		console.log(
+			chalk.green('New device created:'),
+			chalk.blueBright(addr),
+			chalk.cyan(deviceId),
+		)
 		writeConfig(configFile)(config)
 	}
 	return {
