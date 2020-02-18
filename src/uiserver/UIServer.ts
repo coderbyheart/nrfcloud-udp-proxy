@@ -27,7 +27,7 @@ export const UIServer = async ({
 }: {
 	apiKey: string
 	httpPort: number
-	deviceConnections: DeviceConnection[]
+	deviceConnections: Map<string, DeviceConnection>
 	dataDir: string
 	maintainerEmail: string
 }) => {

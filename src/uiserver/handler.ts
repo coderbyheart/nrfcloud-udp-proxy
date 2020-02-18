@@ -14,7 +14,7 @@ export const handler = ({
 	deviceCellGeolocations,
 }: {
 	apiKey: string
-	deviceConnections: DeviceConnection[]
+	deviceConnections: Map<string, DeviceConnection>
 	deviceGeolocations: DeviceGeolocations
 	deviceCellGeolocations: DeviceCellGeolocations
 }): http.RequestListener => async (request, response) => {
@@ -75,13 +75,16 @@ export const handler = ({
 			await pipe(
 				fetchDevices({ apiKey }),
 				TE.map(devices => {
-					const d = deviceConnections.map(({ deviceId }, k) => ({
-						shortId: k,
-						deviceId,
-						geolocation: deviceGeolocations[deviceId],
-						cellGeolocation: deviceCellGeolocations[deviceId],
-						name: devices.find(({ id }) => id === deviceId)?.name || deviceId,
-					}))
+					const d = Array.from(
+						deviceConnections.values(),
+						({ deviceId }, k) => ({
+							shortId: k,
+							deviceId,
+							geolocation: deviceGeolocations[deviceId],
+							cellGeolocation: deviceCellGeolocations[deviceId],
+							name: devices.find(({ id }) => id === deviceId)?.name || deviceId,
+						}),
+					)
 					const res = JSON.stringify(d)
 					response.writeHead(200, {
 						'Content-Length': res.length,

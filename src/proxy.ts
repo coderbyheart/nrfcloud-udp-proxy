@@ -56,7 +56,7 @@ const proxy = async () => {
 	const { mqttEndpoint, messagesPrefix } = await describeAccount({ apiKey })
 
 	// Connect all devices
-	const deviceConnections = [] as DeviceConnection[]
+	const deviceConnections = new Map<string, DeviceConnection>()
 
 	Object.entries(config).forEach(([deviceShortId, deviceConfig]) => {
 		const {
@@ -73,7 +73,7 @@ const proxy = async () => {
 			chalk.yellow('Connecting device:'),
 			chalk.cyan(deviceId),
 		)
-		deviceConnections.push({
+		deviceConnections.set(deviceShortId, {
 			deviceId,
 			...device({
 				deviceId,
@@ -84,7 +84,7 @@ const proxy = async () => {
 				associated: associated || false,
 				mqttEndpoint,
 				onAssociated: () => {
-					deviceConnections[0]?.connection.publish(
+					deviceConnections.get(deviceShortId)?.connection.publish(
 						`${messagesPrefix}d/${deviceId}/d2c`,
 						JSON.stringify({
 							appId: 'DEVICE',
@@ -115,7 +115,7 @@ const proxy = async () => {
 		port,
 		log: (...args) => console.log(chalk.magenta('UDP Server'), ...args),
 		onMessage: async ({ deviceShortId, message }) => {
-			const c = deviceConnections[deviceShortId]
+			const c = deviceConnections.get(deviceShortId)
 			if (!c) {
 				console.error(
 					chalk.magenta('UDP Server'),

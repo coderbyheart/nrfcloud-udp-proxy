@@ -9,7 +9,7 @@ export const server = ({
 }: {
 	port: number | string
 	onMessage: (args: {
-		deviceShortId: number
+		deviceShortId: string
 		message: { [key: string]: any }
 	}) => void
 	log: (...args: any[]) => void
@@ -53,7 +53,7 @@ export const server = ({
 			return
 		} else {
 			onMessage({
-				deviceShortId: parseInt(deviceShortId, 10),
+				deviceShortId,
 				message: maybeParsedMessage.right as { [key: string]: any },
 			})
 		}
