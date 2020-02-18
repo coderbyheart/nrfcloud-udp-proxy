@@ -186,7 +186,9 @@ const proxy = async () => {
 							uiServer.updateDeviceGeoLocation(c, packet)
 						}
 					}
-				} else if (['TEMP', 'AIR_QUAL'].includes(message.appId)) {
+				} else if (
+					['TEMP', 'AIR_QUAL', 'HUMID', 'AIR_PRESS'].includes(message.appId)
+				) {
 					// send everything else verbatim
 					uiServer.sendDeviceUpdate(c, {
 						update: message,

@@ -24,6 +24,8 @@ type Device = {
 	}
 	temp?: number
 	airQuality?: number
+	humidity?: number
+	pressure?: number
 }
 
 const colors = [
@@ -66,8 +68,6 @@ const CustomIconStyle = createGlobalStyle`
 			justify-content: flex-end;
 			span.temp {
 				text-shadow: 1px 1px 1px #fff, -1px 1px 1px #fff, 1px -1px 1px #fff, -1px -1px 1px #fff;
-			}
-			span.airquality {
 			}
 			${Object.entries(airQualityColors).map(
 				([k, c]) => `.airquality-${k} { 
@@ -157,35 +157,35 @@ export const Map = ({ proxyEndpoint }: { proxyEndpoint: string }) => {
 					},
 				])
 			}
+
+			const updateDeviceProperty = (deviceId: string, update: object) =>
+				updateDevices(devices => {
+					const d = devices.find(d => deviceId === d.deviceId)
+					if (!d) {
+						return devices
+					}
+					return [
+						...devices.filter(d => deviceId !== d.deviceId),
+						{
+							...d,
+							...update,
+						},
+					]
+				})
+
 			if ('update' in update) {
 				const { appId, data } = update.update
 				if (appId === 'TEMP') {
-					updateDevices(devices => {
-						const d = devices.find(d => update.deviceId === d.deviceId)
-						if (!d) {
-							return devices
-						}
-						return [
-							...devices.filter(d => update.deviceId !== d.deviceId),
-							{
-								...d,
-								temp: parseFloat(data),
-							},
-						]
-					})
+					updateDeviceProperty(update.deviceId, { temp: parseFloat(data) })
 				} else if (appId === 'AIR_QUAL') {
-					updateDevices(devices => {
-						const d = devices.find(d => update.deviceId === d.deviceId)
-						if (!d) {
-							return devices
-						}
-						return [
-							...devices.filter(d => update.deviceId !== d.deviceId),
-							{
-								...d,
-								airQuality: parseFloat(data),
-							},
-						]
+					updateDeviceProperty(update.deviceId, {
+						airQuality: parseFloat(data),
+					})
+				} else if (appId === 'HUMID') {
+					updateDeviceProperty(update.deviceId, { humidity: parseFloat(data) })
+				} else if (appId === 'AIR_PRESS') {
+					updateDeviceProperty(update.deviceId, {
+						pressure: parseFloat(data) * 10,
 					})
 				}
 			}
@@ -233,7 +233,16 @@ export const Map = ({ proxyEndpoint }: { proxyEndpoint: string }) => {
 			/>
 			{devices.map(
 				(
-					{ cellGeolocation, geolocation, name, deviceId, temp, airQuality },
+					{
+						cellGeolocation,
+						geolocation,
+						name,
+						deviceId,
+						temp,
+						airQuality,
+						humidity,
+						pressure,
+					},
 					k,
 				) => {
 					if (!geolocation && !cellGeolocation) return null
@@ -295,6 +304,18 @@ export const Map = ({ proxyEndpoint }: { proxyEndpoint: string }) => {
 									{temp && (
 										<>
 											Temperature: {temp}°C
+											<br />
+										</>
+									)}
+									{humidity && (
+										<>
+											Humidity: {humidity}%
+											<br />
+										</>
+									)}
+									{pressure && (
+										<>
+											Pressure: {pressure}hPa
 											<br />
 										</>
 									)}
