@@ -135,10 +135,13 @@ export const Map = ({ proxyEndpoint }: { proxyEndpoint: string }) => {
 		}
 	}, [proxyEndpoint])
 
+	const center = (c => (c ? JSON.parse(c) : [63.4210966, 10.4378928]))(
+		window.localStorage.getItem('map:center'),
+	)
+
 	return (
 		<LeafletMap
-			// center={[63.4210966, 10.4378928]}
-			center={[61.366447, 5.398771]}
+			center={center}
 			zoom={zoom}
 			ref={mapRef}
 			onzoomend={() => {
@@ -150,6 +153,18 @@ export const Map = ({ proxyEndpoint }: { proxyEndpoint: string }) => {
 					window.localStorage.setItem(
 						'map:zoom',
 						`${mapRef.current.viewport.zoom}`,
+					)
+				}
+			}}
+			ondragend={() => {
+				if (
+					mapRef.current &&
+					mapRef.current.viewport &&
+					mapRef.current.viewport.center
+				) {
+					window.localStorage.setItem(
+						'map:center',
+						JSON.stringify(mapRef.current.viewport.center),
 					)
 				}
 			}}
