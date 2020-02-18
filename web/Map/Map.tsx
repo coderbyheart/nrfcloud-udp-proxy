@@ -179,13 +179,14 @@ export const Map = ({ proxyEndpoint }: { proxyEndpoint: string }) => {
 
 					return (
 						<React.Fragment key={k}>
-							{cellGeolocation && (
-								<Circle
-									center={cellGeolocation}
-									radius={cellGeolocation.accuracy}
-									color={colors[k]}
-								/>
-							)}
+							{cellGeolocation &&
+								(!geolocation || cellGeolocationTime > geolocationTime) && (
+									<Circle
+										center={cellGeolocation}
+										radius={cellGeolocation.accuracy}
+										color={colors[k]}
+									/>
+								)}
 							<Marker
 								icon={L.divIcon({
 									className: `thingyIcon thingy${k}`,
