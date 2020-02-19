@@ -12,6 +12,7 @@ import { createGlobalStyle } from 'styled-components'
 import { GGAPacket } from 'nmea-simple'
 import { RSRP, RSRPBar, dbmToRSRP } from '@bifravst/rsrp-bar/dist/index'
 import styled from 'styled-components'
+import { formatDistanceToNow } from 'date-fns'
 
 import MapIcon from '../marker.svg'
 
@@ -335,6 +336,14 @@ export const Map = ({ proxyEndpoint }: { proxyEndpoint: string }) => {
 									>
 										{name}
 									</a>
+									<br />
+									Position last updated:{' '}
+									{formatDistanceToNow(
+										geolocationTime > cellGeolocationTime
+											? geolocationTime
+											: cellGeolocationTime,
+									)}{' '}
+									ago
 									<br />
 									{rsrpDbm && (
 										<>
