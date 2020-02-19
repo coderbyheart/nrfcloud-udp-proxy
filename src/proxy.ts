@@ -187,7 +187,9 @@ const proxy = async () => {
 						}
 					}
 				} else if (
-					['TEMP', 'AIR_QUAL', 'HUMID', 'AIR_PRESS'].includes(message.appId)
+					['TEMP', 'AIR_QUAL', 'HUMID', 'AIR_PRESS', 'RSRP'].includes(
+						message.appId,
+					)
 				) {
 					// send everything else verbatim
 					uiServer.sendDeviceUpdate(c, {

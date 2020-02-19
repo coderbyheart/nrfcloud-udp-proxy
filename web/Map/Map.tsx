@@ -1,4 +1,5 @@
 import React, { createRef, useState, useEffect } from 'react'
+import { renderToString } from 'react-dom/server'
 import {
 	Map as LeafletMap,
 	TileLayer,
@@ -9,6 +10,8 @@ import {
 import * as L from 'leaflet'
 import { createGlobalStyle } from 'styled-components'
 import { GGAPacket } from 'nmea-simple'
+import { RSRP, RSRPBar, dbmToRSRP } from '@bifravst/rsrp-bar/dist/index'
+import styled from 'styled-components'
 
 import MapIcon from '../marker.svg'
 
@@ -26,6 +29,7 @@ type Device = {
 	airQuality?: number
 	humidity?: number
 	pressure?: number
+	rsrpDbm?: number
 }
 
 const colors = [
@@ -51,6 +55,18 @@ const airQualityColors = {
 	G: '#663300',
 }
 
+const StyledRSRPBar = styled(RSRPBar)`
+	width: 30px;
+	height: 30px;
+	color: #e826e1;
+`
+
+const StyledMapIcon = styled(MapIcon)`
+	width: 30px;
+	height: 45px;
+	margin-left: 45px;
+`
+
 const CustomIconStyle = createGlobalStyle`
 	.thingyIcon {
 		div.label {
@@ -75,13 +91,8 @@ const CustomIconStyle = createGlobalStyle`
 				 }`,
 			)}
 		}
-		svg {
-			width: 30px;
-			margin-left: 45px;
-		}
 	}
 	${colors.map((c, k) => `.thingy${k} { color: ${c}; }`)}
-	
 `
 
 const debugWs = (...args: any[]) =>
@@ -187,6 +198,10 @@ export const Map = ({ proxyEndpoint }: { proxyEndpoint: string }) => {
 					updateDeviceProperty(update.deviceId, {
 						pressure: parseFloat(data) * 10,
 					})
+				} else if (appId === 'RSRP') {
+					updateDeviceProperty(update.deviceId, {
+						rsrpDbm: parseFloat(data),
+					})
 				}
 			}
 		}
@@ -242,6 +257,7 @@ export const Map = ({ proxyEndpoint }: { proxyEndpoint: string }) => {
 						airQuality,
 						humidity,
 						pressure,
+						rsrpDbm,
 					},
 					k,
 				) => {
@@ -277,17 +293,36 @@ export const Map = ({ proxyEndpoint }: { proxyEndpoint: string }) => {
 									iconSize: [120, 85],
 									iconAnchor: [60, 85],
 									popupAnchor: [0, -40],
-									html: `<div class="label">
-									${temp ? `<span class="temp">${temp}°C</span>` : ''}
-									${
-										airQuality
-											? `<span class="airquality airquality-${
-													describeAirQuality(airQuality).rating
-											  }">${describeAirQuality(airQuality).description}</span>`
-											: ''
-									}
-									</div>
-									${MapIcon}`,
+									html: renderToString(
+										<>
+											<div className="label">
+												{temp && <span className="temp">{temp}°C</span>}
+												{airQuality && (
+													<span
+														className={`airquality airquality-${
+															describeAirQuality(airQuality).rating
+														}`}
+													>
+														{describeAirQuality(airQuality).description}
+													</span>
+												)}
+											</div>
+											<StyledMapIcon />
+											{rsrpDbm && (
+												<RSRP
+													rsrp={dbmToRSRP(rsrpDbm)}
+													renderBar={({ quality }) =>
+														quality === 0 ? (
+															<StyledRSRPBar quality={0} />
+														) : (
+															<StyledRSRPBar quality={quality} />
+														)
+													}
+													renderInvalid={() => <span>❎</span>}
+												/>
+											)}
+										</>,
+									),
 								})}
 								position={markerPos}
 							>
@@ -301,6 +336,12 @@ export const Map = ({ proxyEndpoint }: { proxyEndpoint: string }) => {
 										{name}
 									</a>
 									<br />
+									{rsrpDbm && (
+										<>
+											RSRP: {rsrpDbm}dbm
+											<br />
+										</>
+									)}
 									{temp && (
 										<>
 											Temperature: {temp}°C
