@@ -117,6 +117,8 @@ const proxy = async () => {
 		maintainerEmail: adminEmail,
 	})
 
+	const justInTimeRegistrations = new Map<string, Promise<DeviceConnection>>()
+
 	UDPServer({
 		port,
 		log: (...args) => withts(console.log)(chalk.magenta('UDP Server'), ...args),
@@ -127,11 +129,21 @@ const proxy = async () => {
 					chalk.magenta('UDP Server'),
 					chalk.yellow(`Device ${deviceShortId} not registered!`),
 				)
-				config[deviceShortId] = await registerDevice({ apiKey })
-				c = await connectDevice({
-					...config[deviceShortId],
+				if (!justInTimeRegistrations.get(deviceShortId)) {
+					justInTimeRegistrations.set(
+						deviceShortId,
+						registerDevice({ apiKey }).then(async cfg => {
+							config[deviceShortId] = cfg
+							return connectDevice({
+								...config[deviceShortId],
+								deviceShortId,
+							})
+						}),
+					)
+				}
+				c = (await justInTimeRegistrations.get(
 					deviceShortId,
-				})
+				)) as DeviceConnection
 			}
 			if ('state' in message) {
 				c.updateShadow(message).catch(err => {
