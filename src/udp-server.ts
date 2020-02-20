@@ -1,6 +1,7 @@
 import * as chalk from 'chalk'
 import * as dgram from 'dgram'
 import { parseJSON, toError, isLeft } from 'fp-ts/lib/Either'
+import { withts } from './logts'
 
 export const server = ({
 	port,
@@ -27,7 +28,7 @@ export const server = ({
 			.trim()
 			.split(':')
 		if (parts.length < 2) {
-			console.log(
+			withts(console.log)(
 				chalk.magenta('UDP Server'),
 				chalk.red('Dropping invalid message'),
 				chalk.yellow(msg),
@@ -45,7 +46,7 @@ export const server = ({
 		const maybeParsedMessage = parseJSON(message.join(':'), toError)
 
 		if (isLeft(maybeParsedMessage)) {
-			console.error(
+			withts(console.error)(
 				chalk.magenta('UDP Server'),
 				chalk.red('Failed to parse message as JSON!'),
 				chalk.yellow(message),

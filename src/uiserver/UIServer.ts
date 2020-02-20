@@ -9,6 +9,7 @@ import { handler } from './handler'
 import { createHTTPSUiServer } from './https'
 import { createHTTPUiServer } from './http'
 import { Location } from '../unwiredlabs'
+import { withts } from '../logts'
 
 export type DeviceGeolocations = {
 	[key: string]: Packet
@@ -48,14 +49,17 @@ export const UIServer = async ({
 					maintainerEmail,
 					dataDir,
 					log: (...args: any[]) =>
-						console.log(chalk.green(' HTTPS '), ...args.map(chalk.grey)),
+						withts(console.log)(
+							chalk.green(' HTTPS '),
+							...args.map(chalk.grey),
+						),
 			  })
 			: await createHTTPUiServer({ handler: h })
 
 	const wsConnections: WSConnection[] = []
 
 	uiServer.listen(httpPort, () => {
-		console.log(
+		withts(console.log)(
 			chalk.yellowBright('WS Server'),
 			chalk.cyan('is listening at'),
 			chalk.blue(`0.0.0.0:${httpPort}`),
@@ -65,14 +69,14 @@ export const UIServer = async ({
 		})
 		wsServer.on('request', request => {
 			const connection = request.accept(undefined, request.origin)
-			console.log(
+			withts(console.log)(
 				chalk.yellowBright('WS Server'),
 				chalk.cyan(`${connection.remoteAddress} connected`),
 			)
 
 			wsConnections.push(connection)
 			connection.on('close', () => {
-				console.log(
+				withts(console.log)(
 					chalk.yellowBright('WS Server'),
 					chalk.cyan(`${connection.remoteAddress} disconnected`),
 				)
@@ -83,7 +87,7 @@ export const UIServer = async ({
 
 	const updateClients = (update: object) => {
 		wsConnections.forEach(connection => {
-			console.log(
+			withts(console.log)(
 				chalk.yellowBright('WS Server'),
 				chalk.blue('>'),
 				chalk.cyan(connection.remoteAddress),

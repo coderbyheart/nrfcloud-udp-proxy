@@ -10,6 +10,7 @@ import { resolveCellGeolocation } from './unwiredlabs'
 import { mapLeft, map } from 'fp-ts/lib/TaskEither'
 import { pipe } from 'fp-ts/lib/pipeable'
 import { isLeft } from 'fp-ts/lib/Either'
+import { withts } from './logts'
 
 export type DeviceConnection = {
 	connection: AwsIotDevice
@@ -85,7 +86,7 @@ const proxy = async () => {
 				},
 				apiKey,
 				log: (...args) =>
-					console.log(chalk.bgCyan(` ${deviceShortId} `), ...args),
+					withts(console.log)(chalk.bgCyan(` ${deviceShortId} `), ...args),
 			})
 			deviceConnections.set(deviceShortId, {
 				deviceId: deviceId,
@@ -94,7 +95,7 @@ const proxy = async () => {
 		})
 
 	Object.entries(config).forEach(([deviceShortId, deviceConfig]) => {
-		console.log(
+		withts(console.log)(
 			chalk.bgCyan(` ${deviceShortId} `),
 			chalk.yellow('Connecting device:'),
 			chalk.cyan(deviceConfig.deviceId),
@@ -103,7 +104,7 @@ const proxy = async () => {
 			...deviceConfig,
 			deviceShortId,
 		}).catch(err => {
-			console.error(chalk.red(err.message))
+			withts(console.error)(chalk.red(err.message))
 		})
 	})
 
@@ -118,11 +119,11 @@ const proxy = async () => {
 
 	UDPServer({
 		port,
-		log: (...args) => console.log(chalk.magenta('UDP Server'), ...args),
+		log: (...args) => withts(console.log)(chalk.magenta('UDP Server'), ...args),
 		onMessage: async ({ deviceShortId, message }) => {
 			let c = deviceConnections.get(deviceShortId)
 			if (!c) {
-				console.error(
+				withts(console.error)(
 					chalk.magenta('UDP Server'),
 					chalk.yellow(`Device ${deviceShortId} not registered!`),
 				)
@@ -134,7 +135,7 @@ const proxy = async () => {
 			}
 			if ('state' in message) {
 				c.updateShadow(message).catch(err => {
-					console.error(
+					withts(console.error)(
 						chalk.magenta('UDP Server'),
 						chalk.red(
 							`Failed to update shadow for device ${deviceShortId}: ${err.message}!`,
@@ -153,7 +154,7 @@ const proxy = async () => {
 					pipe(
 						cellgeolocationResolver(cellQuery),
 						map(cellGeolocation => {
-							console.log(
+							withts(console.log)(
 								chalk.bgBlue(' Cell Geolocation '),
 								chalk.grey('located cell'),
 								chalk.blue(JSON.stringify(cellQuery)),
@@ -166,7 +167,7 @@ const proxy = async () => {
 							)
 						}),
 						mapLeft(error => {
-							console.error(
+							withts(console.error)(
 								chalk.bgBlue(' Cell Geolocation '),
 								chalk.red(error.message),
 							)
@@ -176,7 +177,7 @@ const proxy = async () => {
 			} else {
 				const topic = `${messagesPrefix}d/${c.deviceId}/d2c`
 				c.connection.publish(topic, JSON.stringify(message))
-				console.log(
+				withts(console.log)(
 					chalk.bgCyan(` ${deviceShortId} `),
 					chalk.blue('>'),
 					chalk.cyan(topic),
@@ -188,7 +189,7 @@ const proxy = async () => {
 					// parse the NMEA sentence
 					const maybePacket = parseNmea(message.data)
 					if (isLeft(maybePacket)) {
-						console.error(
+						withts(console.error)(
 							chalk.magenta('UDP Server'),
 							chalk.red(maybePacket.left.message),
 						)
@@ -214,6 +215,6 @@ const proxy = async () => {
 }
 
 proxy().catch(err => {
-	console.error(err.message)
+	withts(console.error)(err.message)
 	process.exit(1)
 })

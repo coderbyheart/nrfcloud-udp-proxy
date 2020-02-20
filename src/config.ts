@@ -3,6 +3,7 @@ import * as path from 'path'
 import * as chalk from 'chalk'
 import { v4 } from 'uuid'
 import fetch from 'node-fetch'
+import { withts } from './logts'
 
 export type DeviceConfig = {
 	deviceId: string
@@ -38,7 +39,7 @@ export const registerDevice = async ({
 		},
 	)
 	const { caCert, privateKey, clientCert } = await res.json()
-	console.log(chalk.green('New device created:'), chalk.cyan(deviceId))
+	withts(console.log)(chalk.green('New device created:'), chalk.cyan(deviceId))
 	return {
 		deviceId,
 		ownershipCode,
@@ -64,7 +65,7 @@ export const initConfig = async ({
 	try {
 		config = JSON.parse(fs.readFileSync(configFile, 'utf-8').toString())
 	} catch {
-		console.log(chalk.yellow('No configuration found, creating...'))
+		withts(console.log)(chalk.yellow('No configuration found, creating...'))
 		config = {}
 	}
 
@@ -72,7 +73,7 @@ export const initConfig = async ({
 	while (Object.entries(config).length < deviceCount) {
 		const deviceShortId = `${Object.entries(config).length}`
 		config[deviceShortId] = await registerDevice({ apiKey })
-		console.log(
+		withts(console.log)(
 			chalk.green('New device created:'),
 			chalk.blueBright(deviceShortId),
 			chalk.cyan(config[deviceShortId].deviceId),
