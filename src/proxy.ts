@@ -4,7 +4,7 @@ import { device as AwsIotDevice } from 'aws-iot-device-sdk'
 import { server as UDPServer } from './udp-server'
 import { parseNmea } from './nmea'
 import { UIServer } from './uiserver/UIServer'
-import { initConfig } from './config'
+import { initConfig, DeviceConfig, registerDevice } from './config'
 import { describeAccount } from './nrfcloud'
 import { resolveCellGeolocation } from './unwiredlabs'
 import { mapLeft, map } from 'fp-ts/lib/TaskEither'
@@ -58,29 +58,13 @@ const proxy = async () => {
 	// Connect all devices
 	const deviceConnections = new Map<string, DeviceConnection>()
 
-	Object.entries(config).forEach(([deviceShortId, deviceConfig]) => {
-		const {
-			deviceId,
-			caCert,
-			privateKey,
-			clientCert,
-			ownershipCode,
-			associated,
-		} = deviceConfig
-
-		console.log(
-			chalk.bgCyan(` ${deviceShortId} `),
-			chalk.yellow('Connecting device:'),
-			chalk.cyan(deviceId),
-		)
-		deviceConnections.set(deviceShortId, {
-			deviceId,
-			...device({
-				deviceId,
-				caCert,
-				privateKey,
-				clientCert,
-				ownershipCode,
+	const connectDevice = async (
+		args: DeviceConfig & { deviceShortId: string },
+	): Promise<DeviceConnection> =>
+		new Promise(resolve => {
+			const { deviceShortId, deviceId, associated } = args
+			const d = device({
+				...args,
 				associated: associated || false,
 				mqttEndpoint,
 				onAssociated: () => {
@@ -94,11 +78,32 @@ const proxy = async () => {
 					)
 					config[deviceShortId].associated = true
 					updateConfig(config)
+					resolve({
+						deviceId: deviceId,
+						...d,
+					})
 				},
 				apiKey,
 				log: (...args) =>
 					console.log(chalk.bgCyan(` ${deviceShortId} `), ...args),
-			}),
+			})
+			deviceConnections.set(deviceShortId, {
+				deviceId: deviceId,
+				...d,
+			})
+		})
+
+	Object.entries(config).forEach(([deviceShortId, deviceConfig]) => {
+		console.log(
+			chalk.bgCyan(` ${deviceShortId} `),
+			chalk.yellow('Connecting device:'),
+			chalk.cyan(deviceConfig.deviceId),
+		)
+		connectDevice({
+			...deviceConfig,
+			deviceShortId,
+		}).catch(err => {
+			console.error(chalk.red(err.message))
 		})
 	})
 
@@ -115,13 +120,17 @@ const proxy = async () => {
 		port,
 		log: (...args) => console.log(chalk.magenta('UDP Server'), ...args),
 		onMessage: async ({ deviceShortId, message }) => {
-			const c = deviceConnections.get(deviceShortId)
+			let c = deviceConnections.get(deviceShortId)
 			if (!c) {
 				console.error(
 					chalk.magenta('UDP Server'),
-					chalk.red(`Device ${deviceShortId} not registered!`),
+					chalk.yellow(`Device ${deviceShortId} not registered!`),
 				)
-				return
+				config[deviceShortId] = await registerDevice({ apiKey })
+				c = await connectDevice({
+					...config[deviceShortId],
+					deviceShortId,
+				})
 			}
 			if ('state' in message) {
 				c.updateShadow(message).catch(err => {
@@ -151,7 +160,10 @@ const proxy = async () => {
 								chalk.grey('at'),
 								chalk.blueBright(JSON.stringify(cellGeolocation)),
 							)
-							uiServer.updateDeviceCellGeoLocation(c, cellGeolocation)
+							uiServer.updateDeviceCellGeoLocation(
+								c as DeviceConnection,
+								cellGeolocation,
+							)
 						}),
 						mapLeft(error => {
 							console.error(

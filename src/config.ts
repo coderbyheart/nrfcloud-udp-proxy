@@ -4,19 +4,49 @@ import * as chalk from 'chalk'
 import { v4 } from 'uuid'
 import fetch from 'node-fetch'
 
+export type DeviceConfig = {
+	deviceId: string
+	ownershipCode: string
+	caCert: string
+	privateKey: string
+	clientCert: string
+	associated?: boolean
+}
+
 export type Config = {
-	[key: string]: {
-		deviceId: string
-		ownershipCode: string
-		caCert: string
-		privateKey: string
-		clientCert: string
-		associated?: boolean
-	}
+	[key: string]: DeviceConfig
 }
 
 export const writeConfig = (configFile: string) => (config: Config) =>
 	fs.writeFileSync(configFile, JSON.stringify(config, null, 2), 'utf-8')
+
+export const registerDevice = async ({
+	apiKey,
+}: {
+	apiKey: string
+}): Promise<DeviceConfig> => {
+	const deviceId = v4()
+	const ownershipCode = v4()
+	const res = await fetch(
+		`https://api.nrfcloud.com/v1/devices/${deviceId}/certificates`,
+		{
+			method: 'POST',
+			headers: {
+				Authorization: `Bearer ${apiKey}`,
+			},
+			body: `${ownershipCode}`,
+		},
+	)
+	const { caCert, privateKey, clientCert } = await res.json()
+	console.log(chalk.green('New device created:'), chalk.cyan(deviceId))
+	return {
+		deviceId,
+		ownershipCode,
+		caCert,
+		privateKey,
+		clientCert,
+	}
+}
 
 export const initConfig = async ({
 	deviceCount,
@@ -40,31 +70,12 @@ export const initConfig = async ({
 
 	// If not enough devices, create new devices
 	while (Object.entries(config).length < deviceCount) {
-		const deviceId = v4()
-		const ownershipCode = v4()
-		const res = await fetch(
-			`https://api.nrfcloud.com/v1/devices/${deviceId}/certificates`,
-			{
-				method: 'POST',
-				headers: {
-					Authorization: `Bearer ${apiKey}`,
-				},
-				body: `${ownershipCode}`,
-			},
-		)
-		const { caCert, privateKey, clientCert } = await res.json()
-		const addr = `${Object.entries(config).length}`
-		config[addr] = {
-			deviceId,
-			ownershipCode,
-			caCert,
-			privateKey,
-			clientCert,
-		}
+		const deviceShortId = `${Object.entries(config).length}`
+		config[deviceShortId] = await registerDevice({ apiKey })
 		console.log(
 			chalk.green('New device created:'),
-			chalk.blueBright(addr),
-			chalk.cyan(deviceId),
+			chalk.blueBright(deviceShortId),
+			chalk.cyan(config[deviceShortId].deviceId),
 		)
 		writeConfig(configFile)(config)
 	}
