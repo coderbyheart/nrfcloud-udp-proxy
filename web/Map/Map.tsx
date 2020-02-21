@@ -18,6 +18,7 @@ import MapIcon from '../marker.svg'
 
 type Device = {
 	deviceId: string
+	color: string
 	name: string
 	geolocation?: GGAPacket
 	cellGeolocation?: {
@@ -45,6 +46,14 @@ const colors = [
 	'#f16623',
 	'#f44546',
 ]
+
+const colorGenerator = (function*() {
+	let i = 0
+	while (true) {
+		yield colors[i]
+		i = (i + 1) % colors.length
+	}
+})()
 
 const airQualityColors = {
 	A: '#00e400',
@@ -93,7 +102,6 @@ const CustomIconStyle = createGlobalStyle`
 			)}
 		}
 	}
-	${colors.map((c, k) => `.thingy${k} { color: ${c}; }`)}
 `
 
 const debugWs = (...args: any[]) =>
@@ -142,7 +150,12 @@ export const Map = ({ proxyEndpoint }: { proxyEndpoint: string }) => {
 		fetch(`${proxyEndpoint}/devices`)
 			.then(res => res.json())
 			.then(devices => {
-				updateDevices(devices)
+				updateDevices(
+					devices.map((device: any) => ({
+						...device,
+						color: colorGenerator.next().value,
+					})),
+				)
 			})
 	}, [proxyEndpoint])
 
@@ -164,6 +177,7 @@ export const Map = ({ proxyEndpoint }: { proxyEndpoint: string }) => {
 						...(devices.find(d => update.deviceId === d.deviceId) || {
 							deviceId: update.deviceId,
 							name: update.deviceId,
+							color: colorGenerator.next().value,
 						}),
 						...update,
 					},
@@ -259,6 +273,7 @@ export const Map = ({ proxyEndpoint }: { proxyEndpoint: string }) => {
 						humidity,
 						pressure,
 						rsrpDbm,
+						color,
 					},
 					k,
 				) => {
@@ -285,12 +300,12 @@ export const Map = ({ proxyEndpoint }: { proxyEndpoint: string }) => {
 									<Circle
 										center={cellGeolocation}
 										radius={cellGeolocation.accuracy}
-										color={colors[k]}
+										color={color}
 									/>
 								)}
 							<Marker
 								icon={L.divIcon({
-									className: `thingyIcon thingy${k}`,
+									className: `thingyIcon`,
 									iconSize: [120, 85],
 									iconAnchor: [60, 85],
 									popupAnchor: [0, -40],
@@ -308,7 +323,7 @@ export const Map = ({ proxyEndpoint }: { proxyEndpoint: string }) => {
 													</span>
 												)}
 											</div>
-											<StyledMapIcon />
+											<StyledMapIcon style={{ color }} />
 											{rsrpDbm && (
 												<RSRP
 													rsrp={dbmToRSRP(rsrpDbm)}
