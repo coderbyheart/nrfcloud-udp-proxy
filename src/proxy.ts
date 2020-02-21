@@ -187,15 +187,7 @@ const proxy = async () => {
 					)()
 				}
 			} else {
-				const topic = `${messagesPrefix}d/${c.deviceId}/d2c`
-				c.connection.publish(topic, JSON.stringify(message))
-				withts(console.log)(
-					chalk.bgCyan(` ${deviceShortId} `),
-					chalk.blue('>'),
-					chalk.cyan(topic),
-					chalk.yellow(JSON.stringify(message)),
-				)
-
+				let publish = true
 				if (message.appId === 'GPS') {
 					// For the map feature we want to track the positions of all devices
 					// parse the NMEA sentence
@@ -212,14 +204,32 @@ const proxy = async () => {
 						}
 					}
 				} else if (
-					['TEMP', 'AIR_QUAL', 'HUMID', 'AIR_PRESS', 'RSRP'].includes(
-						message.appId,
-					)
+					['TEMP', 'AIR_QUAL', 'HUMID', 'AIR_PRESS'].includes(message.appId)
 				) {
 					// send everything else verbatim
 					uiServer.sendDeviceUpdate(c, {
 						update: message,
 					})
+				} else if (message.appId === 'RSRP') {
+					// Filter out invalid RSRP dbm values, see https://projecttools.nordicsemi.no/jira/browse/TG91-205
+					if (parseFloat(message.data) < 0) {
+						uiServer.sendDeviceUpdate(c, {
+							update: message,
+						})
+					} else {
+						publish = false
+					}
+				}
+
+				if (publish) {
+					const topic = `${messagesPrefix}d/${c.deviceId}/d2c`
+					c.connection.publish(topic, JSON.stringify(message))
+					withts(console.log)(
+						chalk.bgCyan(` ${deviceShortId} `),
+						chalk.blue('>'),
+						chalk.cyan(topic),
+						chalk.yellow(JSON.stringify(message)),
+					)
 				}
 			}
 		},
