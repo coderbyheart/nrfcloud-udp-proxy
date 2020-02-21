@@ -52,7 +52,7 @@
     "@types/node-fetch": "^2.5.4",
     "@types/react": "^16.9.21",
     "@types/react-leaflet": "^2.5.0",
-    "@types/styled-components": "^4.4.3",
+    "@types/styled-components": "^5.0.0",
     "@types/uuid": "^3.4.7",
     "@types/websocket": "^1.0.0",
     "aws-iot-device-sdk": "^2.2.3",
