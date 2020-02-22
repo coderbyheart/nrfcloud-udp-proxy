@@ -11,13 +11,14 @@ import { createHTTPUiServer } from './http'
 import { Location } from '../unwiredlabs'
 import { withts } from '../logts'
 
-export type DeviceGeolocations = {
-	[key: string]: Packet
-}
+export type DeviceGeolocations = Map<string, Packet>
 
-export type DeviceCellGeolocations = {
-	[key: string]: Location
-}
+export type DeviceCellGeolocations = Map<
+	string,
+	Location & {
+		ts: string
+	}
+>
 
 export const UIServer = async ({
 	apiKey,
@@ -32,8 +33,8 @@ export const UIServer = async ({
 	dataDir: string
 	maintainerEmail: string
 }) => {
-	const deviceGeolocations: DeviceGeolocations = {}
-	const deviceCellGeolocations: DeviceCellGeolocations = {}
+	const deviceGeolocations: DeviceGeolocations = new Map()
+	const deviceCellGeolocations: DeviceCellGeolocations = new Map()
 
 	const h = handler({
 		deviceGeolocations,
@@ -102,7 +103,7 @@ export const UIServer = async ({
 			device: DeviceConnection,
 			geolocation: Packet,
 		) => {
-			deviceGeolocations[device.deviceId] = geolocation
+			deviceGeolocations.set(device.deviceId, geolocation)
 			updateClients({
 				deviceId: device.deviceId,
 				geolocation: geolocation,
@@ -112,13 +113,14 @@ export const UIServer = async ({
 			device: DeviceConnection,
 			cellGeolocation: Location,
 		) => {
-			deviceCellGeolocations[device.deviceId] = cellGeolocation
+			const cellGeoWithTs = {
+				...cellGeolocation,
+				ts: new Date().toISOString(),
+			}
+			deviceCellGeolocations.set(device.deviceId, cellGeoWithTs)
 			updateClients({
 				deviceId: device.deviceId,
-				cellGeolocation: {
-					...cellGeolocation,
-					ts: new Date().toISOString(),
-				},
+				cellGeolocation: cellGeoWithTs,
 			})
 		},
 		sendDeviceUpdate: (device: DeviceConnection, update: any) => {

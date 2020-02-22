@@ -80,8 +80,8 @@ export const handler = ({
 						({ deviceId }, k) => ({
 							shortId: k,
 							deviceId,
-							geolocation: deviceGeolocations[deviceId],
-							cellGeolocation: deviceCellGeolocations[deviceId],
+							geolocation: deviceGeolocations.get(deviceId),
+							cellGeolocation: deviceCellGeolocations.get(deviceId),
 							name: devices.find(({ id }) => id === deviceId)?.name || deviceId,
 						}),
 					)
