@@ -300,7 +300,8 @@ const proxy = async () => {
 						connection,
 						networkInfo,
 						new Date(
-							device?.state?.metadata?.reported?.device?.networkInfo?.cellID?.timestamp,
+							device?.state?.metadata?.reported?.device?.networkInfo?.cellID
+								?.timestamp * 1000,
 						),
 					)
 				}
