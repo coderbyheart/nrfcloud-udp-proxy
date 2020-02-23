@@ -1,5 +1,9 @@
 import fetch from 'node-fetch'
+import * as querystring from 'querystring'
 
+/**
+ * Fetches the historical devices message of the last 24 hours
+ */
 export const historyFetcher = ({ apiKey }: { apiKey: string }) => {
 	const fetchRecursive = async (
 		deviceId: string,
@@ -7,11 +11,16 @@ export const historyFetcher = ({ apiKey }: { apiKey: string }) => {
 		pageNextToken?: string,
 	): Promise<Map<string, string>> =>
 		fetch(
-			`https://api.nrfcloud.com/v1/messages?inclusiveStart=2020-01-01T00%3A00%3A00.000Z&exclusiveEnd=${encodeURIComponent(
-				new Date().toISOString(),
-			)}&deviceIdentifiers=${deviceId}&pageLimit=10&pageSort=desc${
-				pageNextToken ? `&pageNextToken=${pageNextToken}` : ''
-			}`,
+			`https://api.nrfcloud.com/v1/messages?${querystring.stringify({
+				inclusiveStart: new Date(
+					new Date().getTime() - 60 * 60 * 24 * 1000,
+				).toISOString(),
+				exclusiveEnd: new Date().toISOString(),
+				deviceIdentifiers: deviceId,
+				pageLimit: 100,
+				pageSort: 'desc',
+				...(pageNextToken ? { pageNextToken } : {}),
+			})}`,
 			{
 				headers: {
 					accept: 'application/json',
