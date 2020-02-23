@@ -62,7 +62,7 @@ const proxy = async () => {
 	const connectDevice = async (
 		args: DeviceConfig & { deviceShortId: string },
 	): Promise<DeviceConnection> =>
-		new Promise(resolve => {
+		await new Promise(resolve => {
 			const { deviceShortId, deviceId, associated } = args
 			const d = device({
 				...args,

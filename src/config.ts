@@ -39,7 +39,6 @@ export const registerDevice = async ({
 		},
 	)
 	const { caCert, privateKey, clientCert } = await res.json()
-	withts(console.log)(chalk.green('New device created:'), chalk.cyan(deviceId))
 	return {
 		deviceId,
 		ownershipCode,
