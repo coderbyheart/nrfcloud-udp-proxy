@@ -11,6 +11,7 @@ import { mapLeft, map } from 'fp-ts/lib/TaskEither'
 import { pipe } from 'fp-ts/lib/pipeable'
 import { isLeft } from 'fp-ts/lib/Either'
 import { withts } from './logts'
+import { historyFetcher } from './historyFetcher'
 
 export type DeviceConnection = {
 	connection: AwsIotDevice
@@ -48,6 +49,8 @@ const cellgeolocationResolver = memoize(
 			process.env.UNWIREDLABS_ENDPOINT || 'https://eu1.unwiredlabs.com/',
 	}),
 )
+
+const fetchHistory = historyFetcher({ apiKey })
 
 const proxy = async () => {
 	const { config, updateConfig } = await initConfig({
@@ -121,6 +124,57 @@ const proxy = async () => {
 
 	const justInTimeRegistrations = new Map<string, Promise<DeviceConnection>>()
 
+	const sendUpdate = (
+		deviceShortId: string,
+		c: DeviceConnection,
+		message: DeviceAppMessage,
+	) => {
+		let publish = true
+		if (message.appId === 'GPS') {
+			// For the map feature we want to track the positions of all devices
+			// parse the NMEA sentence
+			const maybePacket = parseNmea(message.data)
+			if (isLeft(maybePacket)) {
+				withts(console.error)(
+					chalk.magenta('UDP Server'),
+					chalk.red(maybePacket.left.message),
+				)
+			} else {
+				const packet = maybePacket.right
+				if (packet.sentenceId === 'GGA') {
+					uiServer.updateDeviceGeoLocation(c, packet)
+				}
+			}
+		} else if (
+			['TEMP', 'AIR_QUAL', 'HUMID', 'AIR_PRESS'].includes(message.appId)
+		) {
+			// send everything else verbatim
+			uiServer.sendDeviceUpdate(c, {
+				update: message,
+			})
+		} else if (message.appId === 'RSRP') {
+			// Filter out invalid RSRP dbm values, see https://projecttools.nordicsemi.no/jira/browse/TG91-205
+			if (parseFloat(message.data) < 0) {
+				uiServer.sendDeviceUpdate(c, {
+					update: message,
+				})
+			} else {
+				publish = false
+			}
+		}
+
+		if (publish) {
+			const topic = `${messagesPrefix}d/${c.deviceId}/d2c`
+			c.connection.publish(topic, JSON.stringify(message))
+			withts(console.log)(
+				chalk.bgCyan(` ${deviceShortId} `),
+				chalk.blue('>'),
+				chalk.cyan(topic),
+				chalk.yellow(JSON.stringify(message)),
+			)
+		}
+	}
+
 	UDPServer({
 		port,
 		log: (...args) => withts(console.log)(chalk.magenta('UDP Server'), ...args),
@@ -189,52 +243,31 @@ const proxy = async () => {
 					)()
 				}
 			} else {
-				let publish = true
-				if (message.appId === 'GPS') {
-					// For the map feature we want to track the positions of all devices
-					// parse the NMEA sentence
-					const maybePacket = parseNmea(message.data)
-					if (isLeft(maybePacket)) {
-						withts(console.error)(
-							chalk.magenta('UDP Server'),
-							chalk.red(maybePacket.left.message),
-						)
-					} else {
-						const packet = maybePacket.right
-						if (packet.sentenceId === 'GGA') {
-							uiServer.updateDeviceGeoLocation(c, packet)
-						}
-					}
-				} else if (
-					['TEMP', 'AIR_QUAL', 'HUMID', 'AIR_PRESS'].includes(message.appId)
-				) {
-					// send everything else verbatim
-					uiServer.sendDeviceUpdate(c, {
-						update: message as DeviceAppMessage,
-					})
-				} else if (message.appId === 'RSRP') {
-					// Filter out invalid RSRP dbm values, see https://projecttools.nordicsemi.no/jira/browse/TG91-205
-					if (parseFloat(message.data) < 0) {
-						uiServer.sendDeviceUpdate(c, {
-							update: message as DeviceAppMessage,
-						})
-					} else {
-						publish = false
-					}
-				}
-
-				if (publish) {
-					const topic = `${messagesPrefix}d/${c.deviceId}/d2c`
-					c.connection.publish(topic, JSON.stringify(message))
-					withts(console.log)(
-						chalk.bgCyan(` ${deviceShortId} `),
-						chalk.blue('>'),
-						chalk.cyan(topic),
-						chalk.yellow(JSON.stringify(message)),
-					)
-				}
+				sendUpdate(deviceShortId, c, message as DeviceAppMessage)
 			}
 		},
+	})
+
+	// Fetch historical device data
+	deviceConnections.forEach(async (connection, deviceShortId) => {
+		withts(console.log)(
+			chalk.blue(`History`),
+			chalk.gray('Fetching history for device'),
+			chalk.green(connection.deviceId),
+		)
+		const hist = await fetchHistory(connection.deviceId)
+		hist.forEach((v, k) => {
+			withts(console.log)(
+				chalk.blue(`History`),
+				chalk.green(connection.deviceId),
+				chalk.blueBright(k),
+				chalk.yellow(v),
+			)
+			sendUpdate(deviceShortId, connection, {
+				appId: k,
+				data: v,
+			})
+		})
 	})
 }
 
