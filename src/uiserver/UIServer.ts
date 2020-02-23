@@ -127,10 +127,11 @@ export const UIServer = async ({
 		updateDeviceCellGeoLocation: (
 			device: DeviceConnection,
 			cellGeolocation: Location,
+			ts?: Date,
 		) => {
 			const cellGeoWithTs = {
 				...cellGeolocation,
-				ts: new Date().toISOString(),
+				ts: (ts || new Date()).toISOString(),
 			}
 			deviceCellGeolocations.set(device.deviceId, cellGeoWithTs)
 			updateClients({

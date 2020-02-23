@@ -11,7 +11,8 @@ import { mapLeft, map } from 'fp-ts/lib/TaskEither'
 import { pipe } from 'fp-ts/lib/pipeable'
 import { isLeft } from 'fp-ts/lib/Either'
 import { withts } from './logts'
-import { historyFetcher } from './historyFetcher'
+import { fetchHistoricalMessages } from './historyFetcher'
+import { fetchDevice } from './fetchDevice'
 
 export type DeviceConnection = {
 	connection: AwsIotDevice
@@ -50,7 +51,8 @@ const cellgeolocationResolver = memoize(
 	}),
 )
 
-const fetchHistory = historyFetcher({ apiKey })
+const fetchMessages = fetchHistoricalMessages({ apiKey })
+const fetchDeviceInfo = fetchDevice({ apiKey })
 
 const proxy = async () => {
 	const { config, updateConfig } = await initConfig({
@@ -175,6 +177,37 @@ const proxy = async () => {
 		}
 	}
 
+	const processNetworkInfo = (
+		c: DeviceConnection,
+		networkInfo: { mccmnc: string; cellID: number; areaCode: number },
+		ts?: Date,
+	) => {
+		const cellQuery = {
+			mccmnc: parseInt(networkInfo.mccmnc, 10),
+			areaCode: networkInfo.areaCode,
+			cellID: networkInfo.cellID,
+		}
+		pipe(
+			cellgeolocationResolver(cellQuery),
+			map(cellGeolocation => {
+				withts(console.log)(
+					chalk.bgBlue(' Cell Geolocation '),
+					chalk.grey('located cell'),
+					chalk.blue(JSON.stringify(cellQuery)),
+					chalk.grey('at'),
+					chalk.blueBright(JSON.stringify(cellGeolocation)),
+				)
+				uiServer.updateDeviceCellGeoLocation(c, cellGeolocation, ts)
+			}),
+			mapLeft(error => {
+				withts(console.error)(
+					chalk.bgBlue(' Cell Geolocation '),
+					chalk.red(error.message),
+				)
+			}),
+		)()
+	}
+
 	UDPServer({
 		port,
 		log: (...args) => withts(console.log)(chalk.magenta('UDP Server'), ...args),
@@ -211,36 +244,7 @@ const proxy = async () => {
 					)
 				})
 				if (message.state?.reported?.device?.networkInfo) {
-					const cellQuery = {
-						mccmnc: parseInt(
-							message.state?.reported?.device?.networkInfo?.mccmnc,
-							10,
-						),
-						areaCode: message.state?.reported?.device?.networkInfo?.areaCode,
-						cellID: message.state?.reported?.device?.networkInfo?.cellID,
-					}
-					pipe(
-						cellgeolocationResolver(cellQuery),
-						map(cellGeolocation => {
-							withts(console.log)(
-								chalk.bgBlue(' Cell Geolocation '),
-								chalk.grey('located cell'),
-								chalk.blue(JSON.stringify(cellQuery)),
-								chalk.grey('at'),
-								chalk.blueBright(JSON.stringify(cellGeolocation)),
-							)
-							uiServer.updateDeviceCellGeoLocation(
-								c as DeviceConnection,
-								cellGeolocation,
-							)
-						}),
-						mapLeft(error => {
-							withts(console.error)(
-								chalk.bgBlue(' Cell Geolocation '),
-								chalk.red(error.message),
-							)
-						}),
-					)()
+					processNetworkInfo(c, message.state?.reported?.device?.networkInfo)
 				}
 			} else {
 				sendUpdate(deviceShortId, c, message as DeviceAppMessage)
@@ -255,19 +259,59 @@ const proxy = async () => {
 			chalk.gray('Fetching history for device'),
 			chalk.green(connection.deviceId),
 		)
-		const hist = await fetchHistory(connection.deviceId)
-		hist.forEach((v, k) => {
-			withts(console.log)(
-				chalk.blue(`History`),
-				chalk.green(connection.deviceId),
-				chalk.blueBright(k),
-				chalk.yellow(v),
+		// Messages
+		fetchMessages(connection.deviceId)
+			.then(hist =>
+				hist.forEach((v, k) => {
+					withts(console.log)(
+						chalk.blue(`History`),
+						chalk.green(connection.deviceId),
+						chalk.blueBright(k),
+						chalk.yellow(v),
+					)
+					sendUpdate(deviceShortId, connection, {
+						appId: k,
+						data: v,
+					})
+				}),
 			)
-			sendUpdate(deviceShortId, connection, {
-				appId: k,
-				data: v,
+			.catch(err => {
+				console.error(
+					chalk.blue(`History`),
+					chalk.red(
+						`Failed to fetch messages for device ${connection.deviceId}!`,
+					),
+					chalk.red(err.message),
+				)
 			})
-		})
+		// State
+		fetchDeviceInfo(connection.deviceId)
+			.then(device => {
+				const networkInfo =
+					device?.state?.reported?.device?.networkInfo ?? undefined
+				if (networkInfo) {
+					withts(console.log)(
+						chalk.blue(`History`),
+						chalk.green(connection.deviceId),
+						chalk.blueBright('networkInfo'),
+						chalk.yellow(JSON.stringify(networkInfo)),
+					)
+					processNetworkInfo(
+						connection,
+						networkInfo,
+						new Date(
+							device?.state?.metadata?.reported?.device?.networkInfo?.cellID?.timestamp,
+						),
+					)
+				}
+			})
+			.catch(err => {
+				console.error(
+					chalk.blue(`History`),
+					chalk.red(`Failed to fetch state for device ${connection.deviceId}!`),
+					chalk.red(err.message),
+				)
+			})
 	})
 }
 

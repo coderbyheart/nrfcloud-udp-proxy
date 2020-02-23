@@ -4,7 +4,7 @@ import * as querystring from 'querystring'
 /**
  * Fetches the historical devices message of the last 24 hours
  */
-export const historyFetcher = ({ apiKey }: { apiKey: string }) => {
+export const fetchHistoricalMessages = ({ apiKey }: { apiKey: string }) => {
 	const fetchRecursive = async (
 		deviceId: string,
 		apps?: Map<string, string>,
