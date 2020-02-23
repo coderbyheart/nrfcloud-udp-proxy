@@ -44,7 +44,7 @@
     "@bifravst/code-style": "^6.0.5",
     "@commitlint/cli": "^8.3.5",
     "@commitlint/config-angular": "^8.3.4",
-    "@svgr/webpack": "^5.1.0",
+    "@svgr/webpack": "^5.2.0",
     "@types/aws-iot-device-sdk": "^2.2.1",
     "@types/aws-sdk": "^2.7.0",
     "@types/chalk": "^2.2.0",
