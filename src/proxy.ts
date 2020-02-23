@@ -18,6 +18,8 @@ export type DeviceConnection = {
 	deviceId: string
 }
 
+export type DeviceAppMessage = { appId: string; data: any }
+
 const dataDir = process.env.DATA_DIR || process.cwd()
 const apiKey = process.env.API_KEY || ''
 const port = process.env.PORT || '8888'
@@ -208,13 +210,13 @@ const proxy = async () => {
 				) {
 					// send everything else verbatim
 					uiServer.sendDeviceUpdate(c, {
-						update: message,
+						update: message as DeviceAppMessage,
 					})
 				} else if (message.appId === 'RSRP') {
 					// Filter out invalid RSRP dbm values, see https://projecttools.nordicsemi.no/jira/browse/TG91-205
 					if (parseFloat(message.data) < 0) {
 						uiServer.sendDeviceUpdate(c, {
-							update: message,
+							update: message as DeviceAppMessage,
 						})
 					} else {
 						publish = false

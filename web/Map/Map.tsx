@@ -159,6 +159,21 @@ export const Map = ({ proxyEndpoint }: { proxyEndpoint: string }) => {
 			})
 	}, [proxyEndpoint])
 
+	const updateDeviceProperty = (deviceId: string, update: object) =>
+		updateDevices(devices => {
+			const d = devices.find(d => deviceId === d.deviceId)
+			if (!d) {
+				return devices
+			}
+			return [
+				...devices.filter(d => deviceId !== d.deviceId),
+				{
+					...d,
+					...update,
+				},
+			]
+		})
+
 	useEffect(() => {
 		const connection = new WebSocket(proxyEndpoint.replace(/^http/, 'ws'))
 		connection.onopen = () => {
@@ -184,40 +199,8 @@ export const Map = ({ proxyEndpoint }: { proxyEndpoint: string }) => {
 				])
 			}
 
-			const updateDeviceProperty = (deviceId: string, update: object) =>
-				updateDevices(devices => {
-					const d = devices.find(d => deviceId === d.deviceId)
-					if (!d) {
-						return devices
-					}
-					return [
-						...devices.filter(d => deviceId !== d.deviceId),
-						{
-							...d,
-							...update,
-						},
-					]
-				})
-
 			if ('update' in update) {
-				const { appId, data } = update.update
-				if (appId === 'TEMP') {
-					updateDeviceProperty(update.deviceId, { temp: parseFloat(data) })
-				} else if (appId === 'AIR_QUAL') {
-					updateDeviceProperty(update.deviceId, {
-						airQuality: parseFloat(data),
-					})
-				} else if (appId === 'HUMID') {
-					updateDeviceProperty(update.deviceId, { humidity: parseFloat(data) })
-				} else if (appId === 'AIR_PRESS') {
-					updateDeviceProperty(update.deviceId, {
-						pressure: parseFloat(data) * 10,
-					})
-				} else if (appId === 'RSRP') {
-					updateDeviceProperty(update.deviceId, {
-						rsrpDbm: parseFloat(data),
-					})
-				}
+				updateDeviceProperty(update.deviceId, update.update)
 			}
 		}
 	}, [proxyEndpoint])

@@ -12,11 +12,13 @@ export const handler = ({
 	deviceConnections,
 	deviceGeolocations,
 	deviceCellGeolocations,
+	deviceAppStates,
 }: {
 	apiKey: string
 	deviceConnections: Map<string, DeviceConnection>
 	deviceGeolocations: DeviceGeolocations
 	deviceCellGeolocations: DeviceCellGeolocations
+	deviceAppStates: Map<string, { [key: string]: any }>
 }): http.RequestListener => async (request, response) => {
 	if (request.method === 'OPTIONS') {
 		response.writeHead(200, {
@@ -83,6 +85,7 @@ export const handler = ({
 							geolocation: deviceGeolocations.get(deviceId),
 							cellGeolocation: deviceCellGeolocations.get(deviceId),
 							name: devices.find(({ id }) => id === deviceId)?.name || deviceId,
+							...deviceAppStates.get(deviceId),
 						}),
 					)
 					const res = JSON.stringify(d)

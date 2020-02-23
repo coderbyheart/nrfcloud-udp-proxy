@@ -1,5 +1,5 @@
 import * as chalk from 'chalk'
-import { DeviceConnection } from '../proxy'
+import { DeviceConnection, DeviceAppMessage } from '../proxy'
 import {
 	server as WebSocketServer,
 	connection as WSConnection,
@@ -20,6 +20,19 @@ export type DeviceCellGeolocations = Map<
 	}
 >
 
+const transformUpdate = {
+	TEMP: (data: any) => ({ temp: parseFloat(data) }),
+	AIR_QUAL: (data: any) => ({ airQuality: parseFloat(data) }),
+	HUMID: (data: any) => ({ humidity: parseFloat(data) }),
+	AIR_PRESS: (data: any) => ({ pressure: parseFloat(data) * 10 }),
+	RSRP: (data: any) => ({ rsrpDbm: parseFloat(data) }),
+} as { [key: string]: (v: any) => object }
+
+const processUpdateUpdate = ({ appId, data }: { appId: string; data: any }) => {
+	const t = transformUpdate[appId]
+	return t ? t(data) : { appId, data }
+}
+
 export const UIServer = async ({
 	apiKey,
 	httpPort,
@@ -35,12 +48,14 @@ export const UIServer = async ({
 }) => {
 	const deviceGeolocations: DeviceGeolocations = new Map()
 	const deviceCellGeolocations: DeviceCellGeolocations = new Map()
+	const deviceAppStates = new Map<string, { [key: string]: any }>()
 
 	const h = handler({
 		deviceGeolocations,
 		deviceCellGeolocations,
 		apiKey,
 		deviceConnections,
+		deviceAppStates,
 	})
 
 	const uiServer =
@@ -123,10 +138,19 @@ export const UIServer = async ({
 				cellGeolocation: cellGeoWithTs,
 			})
 		},
-		sendDeviceUpdate: (device: DeviceConnection, update: any) => {
+		sendDeviceUpdate: (
+			device: DeviceConnection,
+			update: { update: DeviceAppMessage },
+		) => {
+			const apps = deviceAppStates.get(device.deviceId) || {}
+			const p = processUpdateUpdate(update.update)
+			deviceAppStates.set(device.deviceId, {
+				...apps,
+				...p,
+			})
 			updateClients({
 				deviceId: device.deviceId,
-				...update,
+				update: p,
 			})
 		},
 	}
