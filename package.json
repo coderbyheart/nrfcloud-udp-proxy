@@ -30,6 +30,7 @@
     "aws-sdk": "^2.624.0",
     "chalk": "^3.0.0",
     "date-fns": "^2.9.0",
+    "feather-icons": "^4.26.0",
     "greenlock-express": "^4.0.3",
     "leaflet": "^1.6.0",
     "nmea-simple": "^3.0.0",

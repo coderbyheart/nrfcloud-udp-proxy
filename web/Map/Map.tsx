@@ -13,10 +13,11 @@ import { GGAPacket } from 'nmea-simple'
 import { RSRP, RSRPBar, dbmToRSRP } from '@bifravst/rsrp-bar/dist/index'
 import styled from 'styled-components'
 import { formatDistanceToNow } from 'date-fns'
+import { DeviceSelector, DeviceHiddenMap } from './DeviceSelector'
 
 import MapIcon from '../marker.svg'
 
-type Device = {
+export type Device = {
 	deviceId: string
 	color: string
 	name: string
@@ -146,6 +147,7 @@ export const Map = ({ proxyEndpoint }: { proxyEndpoint: string }) => {
 	}
 	const mapRef = createRef<LeafletMap>()
 	const [devices, updateDevices] = useState<Device[]>([])
+	const [devicesHidden, setDevicesHidden] = useState<DeviceHiddenMap>({})
 	useEffect(() => {
 		fetch(`${proxyEndpoint}/devices`)
 			.then(res => res.json())
@@ -210,183 +212,187 @@ export const Map = ({ proxyEndpoint }: { proxyEndpoint: string }) => {
 	)
 
 	return (
-		<LeafletMap
-			center={center}
-			zoom={zoom}
-			ref={mapRef}
-			onzoomend={() => {
-				if (
-					mapRef.current &&
-					mapRef.current.viewport &&
-					mapRef.current.viewport.zoom
-				) {
-					window.localStorage.setItem(
-						'map:zoom',
-						`${mapRef.current.viewport.zoom}`,
-					)
-				}
-			}}
-			ondragend={() => {
-				if (
-					mapRef.current &&
-					mapRef.current.viewport &&
-					mapRef.current.viewport.center
-				) {
-					window.localStorage.setItem(
-						'map:center',
-						JSON.stringify(mapRef.current.viewport.center),
-					)
-				}
-			}}
-		>
-			<CustomIconStyle />
-			<TileLayer
-				attribution='&amp;copy <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
-				url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-			/>
-			{devices.map(
-				(
-					{
-						cellGeolocation,
-						geolocation,
-						name,
-						deviceId,
-						temp,
-						airQuality,
-						humidity,
-						pressure,
-						rsrpDbm,
-						color,
-					},
-					k,
-				) => {
-					if (!geolocation && !cellGeolocation) return null
-					const geolocationTime = geolocation?.time
-						? new Date(geolocation.time).getTime()
-						: 0
-					const cellGeolocationTime = cellGeolocation?.ts
-						? new Date(cellGeolocation.ts).getTime()
-						: 0
-
-					let markerPos = (geolocation
-						? { lat: geolocation.latitude, lng: geolocation.longitude }
-						: cellGeolocation) as { lat: number; lng: number }
-
-					if (cellGeolocation && cellGeolocationTime > geolocationTime) {
-						markerPos = cellGeolocation
+		<>
+			<LeafletMap
+				center={center}
+				zoom={zoom}
+				ref={mapRef}
+				onzoomend={() => {
+					if (
+						mapRef.current &&
+						mapRef.current.viewport &&
+						mapRef.current.viewport.zoom
+					) {
+						window.localStorage.setItem(
+							'map:zoom',
+							`${mapRef.current.viewport.zoom}`,
+						)
 					}
+				}}
+				ondragend={() => {
+					if (
+						mapRef.current &&
+						mapRef.current.viewport &&
+						mapRef.current.viewport.center
+					) {
+						window.localStorage.setItem(
+							'map:center',
+							JSON.stringify(mapRef.current.viewport.center),
+						)
+					}
+				}}
+			>
+				<CustomIconStyle />
+				<TileLayer
+					attribution='&amp;copy <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
+					url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+				/>
+				{devices.map(
+					(
+						{
+							cellGeolocation,
+							geolocation,
+							name,
+							deviceId,
+							temp,
+							airQuality,
+							humidity,
+							pressure,
+							rsrpDbm,
+							color,
+						},
+						k,
+					) => {
+						if (!geolocation && !cellGeolocation) return null
+						if (devicesHidden[deviceId] === true) return null
+						const geolocationTime = geolocation?.time
+							? new Date(geolocation.time).getTime()
+							: 0
+						const cellGeolocationTime = cellGeolocation?.ts
+							? new Date(cellGeolocation.ts).getTime()
+							: 0
 
-					return (
-						<React.Fragment key={k}>
-							{cellGeolocation &&
-								(!geolocation || cellGeolocationTime > geolocationTime) && (
-									<Circle
-										center={cellGeolocation}
-										radius={cellGeolocation.accuracy}
-										color={color}
-									/>
-								)}
-							<Marker
-								icon={L.divIcon({
-									className: `thingyIcon`,
-									iconSize: [120, 85],
-									iconAnchor: [60, 85],
-									popupAnchor: [0, -40],
-									html: renderToString(
-										<>
-											<div className="label">
-												{temp && <span className="temp">{temp}°C</span>}
-												{airQuality && (
-													<span
-														className={`airquality airquality-${
-															describeAirQuality(airQuality).rating
-														}`}
-													>
-														{describeAirQuality(airQuality).description}
-													</span>
+						let markerPos = (geolocation
+							? { lat: geolocation.latitude, lng: geolocation.longitude }
+							: cellGeolocation) as { lat: number; lng: number }
+
+						if (cellGeolocation && cellGeolocationTime > geolocationTime) {
+							markerPos = cellGeolocation
+						}
+
+						return (
+							<React.Fragment key={k}>
+								{cellGeolocation &&
+									(!geolocation || cellGeolocationTime > geolocationTime) && (
+										<Circle
+											center={cellGeolocation}
+											radius={cellGeolocation.accuracy}
+											color={color}
+										/>
+									)}
+								<Marker
+									icon={L.divIcon({
+										className: `thingyIcon`,
+										iconSize: [120, 85],
+										iconAnchor: [60, 85],
+										popupAnchor: [0, -40],
+										html: renderToString(
+											<>
+												<div className="label">
+													{temp && <span className="temp">{temp}°C</span>}
+													{airQuality && (
+														<span
+															className={`airquality airquality-${
+																describeAirQuality(airQuality).rating
+															}`}
+														>
+															{describeAirQuality(airQuality).description}
+														</span>
+													)}
+												</div>
+												<StyledMapIcon style={{ color }} />
+												{rsrpDbm && (
+													<RSRP
+														rsrp={dbmToRSRP(rsrpDbm)}
+														renderBar={({ quality }) =>
+															quality === 0 ? (
+																<StyledRSRPBar quality={0} />
+															) : (
+																<StyledRSRPBar quality={quality} />
+															)
+														}
+														renderInvalid={() => <span>❎</span>}
+													/>
 												)}
-											</div>
-											<StyledMapIcon style={{ color }} />
-											{rsrpDbm && (
-												<RSRP
-													rsrp={dbmToRSRP(rsrpDbm)}
-													renderBar={({ quality }) =>
-														quality === 0 ? (
-															<StyledRSRPBar quality={0} />
-														) : (
-															<StyledRSRPBar quality={quality} />
-														)
-													}
-													renderInvalid={() => <span>❎</span>}
-												/>
-											)}
-										</>,
-									),
-								})}
-								position={markerPos}
-							>
-								<Popup>
-									Device:{' '}
-									<a
-										href={`https://nrfcloud.com/#/devices/${deviceId}`}
-										target="_blank"
-										rel="noopener nofollow"
-									>
-										{name}
-									</a>
-									<br />
-									Position last updated:{' '}
-									{formatDistanceToNow(
-										geolocationTime > cellGeolocationTime
-											? geolocationTime
-											: cellGeolocationTime,
-									)}{' '}
-									ago
-									<br />
-									{rsrpDbm && (
-										<>
-											RSRP: {rsrpDbm}dbm
-											<br />
-										</>
-									)}
-									{temp && (
-										<>
-											Temperature: {temp}°C
-											<br />
-										</>
-									)}
-									{humidity && (
-										<>
-											Humidity: {humidity}%
-											<br />
-										</>
-									)}
-									{pressure && (
-										<>
-											Pressure: {pressure}hPa
-											<br />
-										</>
-									)}
-									{airQuality && (
-										<>
-											<a
-												href="https://blog.nordicsemi.com/getconnected/bosch-sensortec-bme680-the-nose-of-nordics-thingy91"
-												target="_blank"
-												rel="noopener nofollow"
-											>
-												Air Quality
-											</a>
-											: {describeAirQuality(airQuality).description} (
-											{airQuality})
-											<br />
-										</>
-									)}
-								</Popup>
-							</Marker>
-						</React.Fragment>
-					)
-				},
-			)}
-		</LeafletMap>
+											</>,
+										),
+									})}
+									position={markerPos}
+								>
+									<Popup>
+										Device:{' '}
+										<a
+											href={`https://nrfcloud.com/#/devices/${deviceId}`}
+											target="_blank"
+											rel="noopener nofollow"
+										>
+											{name}
+										</a>
+										<br />
+										Position last updated:{' '}
+										{formatDistanceToNow(
+											geolocationTime > cellGeolocationTime
+												? geolocationTime
+												: cellGeolocationTime,
+										)}{' '}
+										ago
+										<br />
+										{rsrpDbm && (
+											<>
+												RSRP: {rsrpDbm}dbm
+												<br />
+											</>
+										)}
+										{temp && (
+											<>
+												Temperature: {temp}°C
+												<br />
+											</>
+										)}
+										{humidity && (
+											<>
+												Humidity: {humidity}%
+												<br />
+											</>
+										)}
+										{pressure && (
+											<>
+												Pressure: {pressure}hPa
+												<br />
+											</>
+										)}
+										{airQuality && (
+											<>
+												<a
+													href="https://blog.nordicsemi.com/getconnected/bosch-sensortec-bme680-the-nose-of-nordics-thingy91"
+													target="_blank"
+													rel="noopener nofollow"
+												>
+													Air Quality
+												</a>
+												: {describeAirQuality(airQuality).description} (
+												{airQuality})
+												<br />
+											</>
+										)}
+									</Popup>
+								</Marker>
+							</React.Fragment>
+						)
+					},
+				)}
+			</LeafletMap>
+			<DeviceSelector devices={devices} onUpdate={setDevicesHidden} />
+		</>
 	)
 }
