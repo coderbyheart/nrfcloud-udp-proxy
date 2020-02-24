@@ -140,6 +140,11 @@ const describeAirQuality = (
 	return { description: 'Excellent', rating: 'A' }
 }
 
+const byIMEI = (
+	{ deviceId: ad, imei: ai }: Device,
+	{ deviceId: bd, imei: bi }: Device,
+) => (ai || ad).localeCompare(bi || bd)
+
 export const Map = ({ proxyEndpoint }: { proxyEndpoint: string }) => {
 	let zoom = 13
 	const userZoom = window.localStorage.getItem('map:zoom')
@@ -174,7 +179,7 @@ export const Map = ({ proxyEndpoint }: { proxyEndpoint: string }) => {
 					...d,
 					...update,
 				},
-			]
+			].sort(byIMEI)
 		})
 
 	useEffect(() => {
@@ -189,17 +194,19 @@ export const Map = ({ proxyEndpoint }: { proxyEndpoint: string }) => {
 			const update = JSON.parse(message.data)
 			debugWs(update)
 			if ('geolocation' in update || 'cellGeolocation' in update) {
-				updateDevices(devices => [
-					...devices.filter(d => update.deviceId !== d.deviceId),
-					{
-						...(devices.find(d => update.deviceId === d.deviceId) || {
-							deviceId: update.deviceId,
-							name: update.deviceId,
-							color: colorGenerator.next().value,
-						}),
-						...update,
-					},
-				])
+				updateDevices(devices =>
+					[
+						...devices.filter(d => update.deviceId !== d.deviceId),
+						{
+							...(devices.find(d => update.deviceId === d.deviceId) || {
+								deviceId: update.deviceId,
+								name: update.deviceId,
+								color: colorGenerator.next().value,
+							}),
+							...update,
+						},
+					].sort(byIMEI),
+				)
 			}
 
 			if ('update' in update) {
