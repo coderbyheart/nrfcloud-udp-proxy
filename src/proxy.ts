@@ -247,6 +247,12 @@ const proxy = async () => {
 				if (message.state?.reported?.device?.networkInfo) {
 					processNetworkInfo(c, message.state?.reported?.device?.networkInfo)
 				}
+				if (message?.state?.reported?.device?.deviceInfo?.imei) {
+					uiServer.updateDeviceIMEI(
+						c,
+						message?.state?.reported?.device?.deviceInfo?.imei,
+					)
+				}
 			} else if ('geo' in message) {
 				// echo '2:{"lat":63.4210966,"lng":10.4378928}' | nc -c -w1 -u 127.0.0.1 8888
 				withts(console.log)(
