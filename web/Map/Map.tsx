@@ -10,7 +10,7 @@ import {
 import * as L from 'leaflet'
 import { createGlobalStyle } from 'styled-components'
 import { GGAPacket } from 'nmea-simple'
-import { RSRP, RSRPBar, dbmToRSRP } from '@bifravst/rsrp-bar/dist/index'
+import { RSRP, RSRPBar, dbmToRSRP } from '@bifravst/rsrp-bar'
 import styled from 'styled-components'
 import { formatDistanceToNow } from 'date-fns'
 import { DeviceSelector, DeviceHiddenMap } from './DeviceSelector'

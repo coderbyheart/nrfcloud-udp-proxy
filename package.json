@@ -25,7 +25,7 @@
   },
   "homepage": "https://github.com/coderbyheart/nrfcloud-udp-proxy#readme",
   "dependencies": {
-    "@bifravst/rsrp-bar": "^1.1.0",
+    "@bifravst/rsrp-bar": "^2.0.0",
     "@types/react-dom": "^16.9.5",
     "aws-sdk": "^2.624.0",
     "chalk": "^3.0.0",
@@ -38,7 +38,7 @@
     "react": "^16.12.0",
     "react-dom": "^16.12.0",
     "react-leaflet": "^2.6.1",
-    "uuid": "^3.4.0",
+    "uuid": "^7.0.0",
     "websocket": "^1.0.31"
   },
   "devDependencies": {
