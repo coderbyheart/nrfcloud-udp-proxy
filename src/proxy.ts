@@ -13,6 +13,7 @@ import { isLeft } from 'fp-ts/lib/Either'
 import { withts } from './logts'
 import { fetchHistoricalMessages } from './historyFetcher'
 import { fetchDevice } from './fetchDevice'
+import { GGAPacket } from 'nmea-simple'
 
 export type DeviceConnection = {
 	connection: AwsIotDevice
@@ -246,6 +247,25 @@ const proxy = async () => {
 				if (message.state?.reported?.device?.networkInfo) {
 					processNetworkInfo(c, message.state?.reported?.device?.networkInfo)
 				}
+			} else if ('geo' in message) {
+				// echo '2:{"lat":63.4210966,"lng":10.4378928}' | nc -c -w1 -u 127.0.0.1 8888
+				withts(console.log)(
+					chalk.magenta('UDP Server'),
+					chalk.blue(c.deviceId),
+					chalk.yellow(JSON.stringify(message)),
+				)
+				const packet: GGAPacket = {
+					sentenceId: 'GGA',
+					time: new Date(),
+					latitude: parseFloat(message.geo[0]),
+					longitude: parseFloat(message.geo[1]),
+					fixType: 'manual',
+					satellitesInView: 0,
+					horizontalDilution: 0,
+					altitudeMeters: 0,
+					geoidalSeperation: 0,
+				}
+				uiServer.updateDeviceGeoLocation(c, packet)
 			} else {
 				sendUpdate(deviceShortId, c, message as DeviceAppMessage)
 			}

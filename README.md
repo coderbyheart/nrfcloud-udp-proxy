@@ -41,6 +41,9 @@ These examples use netcat to send UDP messages for device `2` to the proxy:
     echo '2:{"appId":"HUMID","data":"23.9","messageType":"DATA"}' | nc -c -w1 -u 127.0.0.1 8888
     echo '2:{"appId":"AIR_PRESS","data":"96.5","messageType":"DATA"}' | nc -c -w1 -u 127.0.0.1 8888
     echo '2:{"appId":"AIR_QUAL","data":"25.0","messageType":"DATA"}' | nc -c -w1 -u 127.0.0.1 8888
+
+Position 7 devices in Trondheim:
+
     echo '0:{"appId": "GPS","messageType": "DATA","data": "$GPGGA,140254.985,6325.263,N,01026.174,E,1,12,1.0,0.0,M,0.0,M,,*6E"}' | nc -c -w1 -u 127.0.0.1 8888
     echo '1:{"appId": "GPS","messageType": "DATA","data": "$GPGGA,140255.985,6325.249,N,01026.236,E,1,12,1.0,0.0,M,0.0,M,,*62"}' | nc -c -w1 -u 127.0.0.1 8888
     echo '2:{"appId": "GPS","messageType": "DATA","data": "$GPGGA,140256.985,6325.263,N,01026.261,E,1,12,1.0,0.0,M,0.0,M,,*6B"}' | nc -c -w1 -u 127.0.0.1 8888
@@ -48,6 +51,10 @@ These examples use netcat to send UDP messages for device `2` to the proxy:
     echo '4:{"appId": "GPS","messageType": "DATA","data": "$GPGGA,140258.985,6325.264,N,01026.216,E,1,12,1.0,0.0,M,0.0,M,,*62"}' | nc -c -w1 -u 127.0.0.1 8888
     echo '5:{"appId": "GPS","messageType": "DATA","data": "$GPGGA,140259.985,6325.268,N,01026.198,E,1,12,1.0,0.0,M,0.0,M,,*6A"}' | nc -c -w1 -u 127.0.0.1 8888
     echo '6:{"appId": "GPS","messageType": "DATA","data": "$GPGGA,140744.328,6325.274,N,01026.217,E,1,12,1.0,0.0,M,0.0,M,,*67"}' | nc -c -w1 -u 127.0.0.1 8888
+
+Directly set the Geo location for a device:
+
+    echo '2:{"geo":[63.4212051,10.4372756]}' | nc -c -w1 -u 127.0.0.1 8888
 
 ## Run it locally
 
