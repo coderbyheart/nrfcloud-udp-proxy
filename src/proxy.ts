@@ -305,6 +305,18 @@ const proxy = async () => {
 						),
 					)
 				}
+				if (device?.state?.reported?.device?.deviceInfo?.imei) {
+					withts(console.log)(
+						chalk.blue(`History`),
+						chalk.green(connection.deviceId),
+						chalk.blueBright('IMEI'),
+						chalk.yellow(device?.state?.reported?.device?.deviceInfo?.imei),
+					)
+					uiServer.updateDeviceIMEI(
+						connection,
+						device?.state?.reported?.device?.deviceInfo?.imei,
+					)
+				}
 			})
 			.catch(err => {
 				console.error(

@@ -33,6 +33,7 @@ export type Device = {
 	humidity?: number
 	pressure?: number
 	rsrpDbm?: number
+	imei?: string
 }
 
 const colors = [
@@ -335,6 +336,7 @@ export const Map = ({ proxyEndpoint }: { proxyEndpoint: string }) => {
 											href={`https://nrfcloud.com/#/devices/${deviceId}`}
 											target="_blank"
 											rel="noopener nofollow"
+											title={`Open ${name} on nRF Connect for Cloud`}
 										>
 											{name}
 										</a>

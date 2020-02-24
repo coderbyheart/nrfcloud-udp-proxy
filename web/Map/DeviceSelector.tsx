@@ -2,9 +2,10 @@ import React, { useState, useEffect } from 'react'
 import styled from 'styled-components'
 import { Device } from './Map'
 
-import Minimize from 'feather-icons/dist/icons/chevron-up.svg'
+import Minimize from 'feather-icons/dist/icons/x.svg'
 import Maximize from 'feather-icons/dist/icons/chevron-down.svg'
 import Hidden from 'feather-icons/dist/icons/eye-off.svg'
+import Open from 'feather-icons/dist/icons/external-link.svg'
 
 const List = styled.ul`
 	position: absolute;
@@ -30,6 +31,9 @@ const Item = styled.li`
 	input {
 		margin-right: 0.5rem;
 	}
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
 `
 
 const Title = styled(Item)`
@@ -44,12 +48,18 @@ const Text = styled.span`
 	align-items: center;
 `
 
-const ToggleButton = styled.button`
+const Button = styled.button`
 	border: 0;
 	background-color: transparent;
 	padding: 0;
 	line-height: 1;
 	margin-left: 1rem;
+`
+
+const A = styled.a`
+	margin-left: 1rem;
+	color: #000000;
+	opacity: 0.5;
 `
 
 const HiddenCounter = styled.span`
@@ -61,6 +71,26 @@ const HiddenCounter = styled.span`
 		margin-right: 0.5rem;
 	}
 `
+
+const IMEI = styled.span`
+	code:first-child {
+		opacity: 0.5;
+	}
+	code:last-child {
+		font-weight: bold;
+	}
+`
+
+const formatIMEI = (tailLen: number) => (imei: string) => {
+	const start = imei.substr(0, tailLen + 1)
+	const end = imei.substr(-tailLen)
+	return (
+		<IMEI>
+			<code>{start}</code>
+			<code>{end}</code>
+		</IMEI>
+	)
+}
 
 export type DeviceHiddenMap = { [key: string]: boolean }
 
@@ -114,7 +144,7 @@ export const DeviceSelector = ({
 						</HiddenCounter>
 					)}
 				</Text>
-				<ToggleButton
+				<Button
 					onClick={() => {
 						window.localStorage.setItem(
 							'deviceselector:minimized',
@@ -124,7 +154,7 @@ export const DeviceSelector = ({
 					}}
 				>
 					{minimized ? <Maximize /> : <Minimize />}
-				</ToggleButton>
+				</Button>
 			</Title>
 			{!minimized &&
 				devices.map((d, k) => (
@@ -138,8 +168,21 @@ export const DeviceSelector = ({
 								}}
 								checked={!(isHidden[d.deviceId] === true)}
 							/>
-							{d.name}
+							{d.imei && (
+								<>
+									IMEI: {formatIMEI(7)(d.imei)} <small>({d.name})</small>
+								</>
+							)}
+							{!d.imei && d.name}
 						</label>
+						<A
+							href={`https://nrfcloud.com/#/devices/${d.deviceId}`}
+							title={`Open ${d.name} on nRF Connect for Cloud`}
+							target="_blank"
+							rel="noopener nofollow"
+						>
+							<Open />
+						</A>
 					</Item>
 				))}
 		</List>

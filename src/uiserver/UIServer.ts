@@ -49,6 +49,7 @@ export const UIServer = async ({
 	const deviceGeolocations: DeviceGeolocations = new Map()
 	const deviceCellGeolocations: DeviceCellGeolocations = new Map()
 	const deviceAppStates = new Map<string, { [key: string]: any }>()
+	const deviceIMEIs = new Map<string, string>()
 
 	const h = handler({
 		deviceGeolocations,
@@ -56,6 +57,7 @@ export const UIServer = async ({
 		apiKey,
 		deviceConnections,
 		deviceAppStates,
+		deviceIMEIs,
 	})
 
 	const uiServer =
@@ -121,7 +123,14 @@ export const UIServer = async ({
 			deviceGeolocations.set(device.deviceId, geolocation)
 			updateClients({
 				deviceId: device.deviceId,
-				geolocation: geolocation,
+				geolocation,
+			})
+		},
+		updateDeviceIMEI: (device: DeviceConnection, imei: string) => {
+			deviceIMEIs.set(device.deviceId, imei)
+			updateClients({
+				deviceId: device.deviceId,
+				imei,
 			})
 		},
 		updateDeviceCellGeoLocation: (
