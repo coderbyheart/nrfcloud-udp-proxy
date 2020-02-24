@@ -186,10 +186,10 @@ export const DeviceSelector = ({
 									}}
 								/>
 							)}
-
 							{d.imei && (
 								<>
-									IMEI: {formatIMEI(7)(d.imei)} <small>({d.name})</small>
+									<span>IMEI: {formatIMEI(7)(d.imei)}</span>{' '}
+									<small>({d.name})</small>
 								</>
 							)}
 							{!d.imei && d.name}
