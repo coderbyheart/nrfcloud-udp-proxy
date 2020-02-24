@@ -188,7 +188,10 @@ export const DeviceSelector = ({
 							)}
 							{d.imei && (
 								<>
-									<span>IMEI: {formatIMEI(7)(d.imei)}</span>{' '}
+									<span style={{ marginRight: '0.5rem' }}>
+										IMEI: {formatIMEI(7)(d.imei)}
+									</span>
+
 									<small>({d.name})</small>
 								</>
 							)}
