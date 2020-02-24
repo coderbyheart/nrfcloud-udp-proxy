@@ -1,20 +1,19 @@
 import fetch from 'node-fetch'
 import * as TE from 'fp-ts/lib/TaskEither'
-
-export type Location = {
-	lat: number
-	lng: number
-	accuracy: number
-}
+import { Location } from './types'
 
 const query = ({
 	apiKey,
 	endpoint,
 	cell,
+	log,
+	errorLog,
 }: {
 	apiKey: string
 	endpoint: string
 	cell: { areaCode: number; mccmnc: number; cellID: number }
+	log: (...args: any) => void
+	errorLog: (...args: any) => void
 }) =>
 	TE.tryCatch<Error, Location>(
 		async () =>
@@ -51,26 +50,42 @@ const query = ({
 						}>,
 				)
 				.then(({ status, message, lat, lon, accuracy }) => {
-					if (status === 'ok') return { lat, lng: lon, accuracy }
+					if (status === 'ok') {
+						log(`Cell geolocation found`, cell, {
+							status,
+							message,
+							lat,
+							lon,
+							accuracy,
+						})
+						return { lat, lng: lon, accuracy }
+					}
 					throw new Error(message)
 				}),
-		err =>
-			new Error(
-				`Failed to resolve cell location (${JSON.stringify(cell)}): ${
-					(err as Error).message
-				}!`,
-			),
+		err => {
+			const msg = `Failed to resolve cell location (${JSON.stringify(cell)}): ${
+				(err as Error).message
+			}!`
+			errorLog(msg)
+			return new Error(msg)
+		},
 	)
 
 export const resolveCellGeolocation = ({
 	apiKey,
 	endpoint,
+	log,
+	errorLog,
 }: {
 	apiKey: string
 	endpoint: string
+	log: (...args: any) => void
+	errorLog: (...args: any) => void
 }) => (cell: { areaCode: number; mccmnc: number; cellID: number }) =>
 	query({
 		apiKey,
 		endpoint,
 		cell,
+		log,
+		errorLog,
 	})

@@ -8,7 +8,6 @@ import { Packet } from 'nmea-simple'
 import { handler } from './handler'
 import { createHTTPSUiServer } from './https'
 import { createHTTPUiServer } from './http'
-import { Location } from '../unwiredlabs'
 import { withts } from '../logts'
 
 export type DeviceGeolocations = Map<string, Packet>
@@ -31,6 +30,12 @@ const transformUpdate = {
 const processUpdateUpdate = ({ appId, data }: { appId: string; data: any }) => {
 	const t = transformUpdate[appId]
 	return t ? t(data) : { appId, data }
+}
+
+export type Location = {
+	lat: number
+	lng: number
+	accuracy?: number
 }
 
 export const UIServer = async ({

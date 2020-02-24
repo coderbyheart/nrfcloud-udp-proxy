@@ -6,8 +6,9 @@ import { parseNmea } from './nmea'
 import { UIServer } from './uiserver/UIServer'
 import { initConfig, DeviceConfig, registerDevice } from './config'
 import { describeAccount } from './nrfcloud'
-import { resolveCellGeolocation } from './unwiredlabs'
-import { mapLeft, map } from 'fp-ts/lib/TaskEither'
+import { resolveCellGeolocation as resolveCellGeolocationUnwiredLabs } from './cellgeo/unwiredlabs'
+import { resolveCellGeolocation as resolveCellGeolocationBifravst } from './cellgeo/bifravst'
+import { orElse, map, mapLeft } from 'fp-ts/lib/TaskEither'
 import { pipe } from 'fp-ts/lib/pipeable'
 import { isLeft } from 'fp-ts/lib/Either'
 import { withts } from './logts'
@@ -44,11 +45,41 @@ const memoize = <R, T extends (...args: any[]) => R>(f: T): T => {
 	return g as T
 }
 
-const cellgeolocationResolver = memoize(
-	resolveCellGeolocation({
+const unwiredLabsCellgeolocationResolver = memoize(
+	resolveCellGeolocationUnwiredLabs({
 		apiKey: process.env.UNWIREDLABS_API_KEY || '',
 		endpoint:
 			process.env.UNWIREDLABS_ENDPOINT || 'https://eu1.unwiredlabs.com/',
+		log: (...args) =>
+			withts(console.log)(
+				chalk.bgBlue(' Cell Geolocation '),
+				chalk.bgYellow(' UnwiredLabs '),
+				...args,
+			),
+		errorLog: (...args) =>
+			withts(console.error)(
+				chalk.bgBlue(' Cell Geolocation '),
+				chalk.bgYellow(' UnwiredLabs '),
+				...args.map((s: any) => chalk.red(JSON.stringify(s))),
+			),
+	}),
+)
+
+const bifravstCellgeolocationResolver = memoize(
+	resolveCellGeolocationBifravst({
+		endpoint: process.env.BIFRAVST_ENDPOINT || '',
+		log: (...args) =>
+			withts(console.log)(
+				chalk.bgBlue(' Cell Geolocation '),
+				chalk.bgYellow(' Bifravst '),
+				...args,
+			),
+		errorLog: (...args) =>
+			withts(console.error)(
+				chalk.bgBlue(' Cell Geolocation '),
+				chalk.bgYellow(' Bifravst '),
+				...args.map((s: any) => chalk.red(JSON.stringify(s))),
+			),
 	}),
 )
 
@@ -189,7 +220,8 @@ const proxy = async () => {
 			cellID: networkInfo.cellID,
 		}
 		pipe(
-			cellgeolocationResolver(cellQuery),
+			bifravstCellgeolocationResolver(cellQuery),
+			orElse(() => unwiredLabsCellgeolocationResolver(cellQuery)),
 			map(cellGeolocation => {
 				withts(console.log)(
 					chalk.bgBlue(' Cell Geolocation '),
@@ -254,7 +286,6 @@ const proxy = async () => {
 					)
 				}
 			} else if ('geo' in message) {
-				// echo '2:{"lat":63.4210966,"lng":10.4378928}' | nc -c -w1 -u 127.0.0.1 8888
 				withts(console.log)(
 					chalk.magenta('UDP Server'),
 					chalk.blue(c.deviceId),
