@@ -45,7 +45,6 @@ export const handler = ({
 			.readFile(path.join(folder, file), 'utf-8')
 			.then(data => {
 				response.writeHead(200, {
-					'Content-Length': data.length,
 					'Content-Type': type,
 				})
 				response.end(data.toString())
