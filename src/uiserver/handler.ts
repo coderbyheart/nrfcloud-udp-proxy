@@ -32,7 +32,7 @@ export const handler = ({
 		return
 	}
 
-	const returnFile = ({ folder }: { folder: string }) => ({
+	const returnFile = ({ folder }: { folder: string }) => async ({
 		response,
 		file,
 		type,
@@ -62,14 +62,14 @@ export const handler = ({
 
 	switch (request.url) {
 		case '/':
-			returnWebFile({
+			await returnWebFile({
 				response,
 				file: 'index.html',
 				type: 'text/html',
 			})
 			break
 		case '/main.js':
-			returnDistFile({
+			await returnDistFile({
 				response,
 				file: 'main.js',
 				type: 'text/javascript',
@@ -102,7 +102,7 @@ export const handler = ({
 			)()
 			break
 		case '/favicon.ico':
-			returnWebFile({
+			await returnWebFile({
 				response,
 				file: 'favicon.ico',
 				type: 'image/x-icon',
