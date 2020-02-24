@@ -48,7 +48,7 @@ export const handler = ({
 					'Content-Length': data.length,
 					'Content-Type': type,
 				})
-				response.end(data)
+				response.end(data.toString())
 			})
 			.catch(() => {
 				response.statusCode = 500
