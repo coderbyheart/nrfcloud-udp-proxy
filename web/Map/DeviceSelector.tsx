@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react'
 import styled from 'styled-components'
-import { Device } from './Map'
+import { Device, byIMEI } from './Map'
 
 import Minimize from 'feather-icons/dist/icons/x.svg'
 import Maximize from 'feather-icons/dist/icons/chevron-down.svg'
 import Hidden from 'feather-icons/dist/icons/eye-off.svg'
 import Open from 'feather-icons/dist/icons/external-link.svg'
+import MapIcon from '../marker.svg'
 
 const List = styled.ul`
 	position: absolute;
@@ -21,15 +22,26 @@ const List = styled.ul`
 	padding: 0;
 `
 
+const StyledMapIcon = styled(MapIcon)`
+	margin-right: 0.5rem;
+`
+
+const DisabledMapIcon = styled(StyledMapIcon)`
+	filter: grayscale(1);
+	opacity: 0.25;
+`
+
+const Label = styled.label`
+	display: flex;
+	align-items: center;
+`
+
 const Item = styled.li`
 	padding: 0;
 	padding: 5px 10px;
 	border-bottom: 1px solid #ccc;
 	&:last-child {
 		border-bottom: 0;
-	}
-	input {
-		margin-right: 0.5rem;
 	}
 	display: flex;
 	align-items: center;
@@ -157,24 +169,31 @@ export const DeviceSelector = ({
 				</Button>
 			</Title>
 			{!minimized &&
-				devices.map((d, k) => (
+				[...devices].sort(byIMEI).map((d, k) => (
 					<Item key={k}>
-						<label htmlFor={`input-${k}`}>
-							<input
-								id={`input-${k}`}
-								type="checkbox"
-								onChange={() => {
-									toggleDevice(d.deviceId)
-								}}
-								checked={!(isHidden[d.deviceId] === true)}
-							/>
+						<Label
+							htmlFor={`input-${k}`}
+							onClick={() => {
+								toggleDevice(d.deviceId)
+							}}
+						>
+							{isHidden[d.deviceId] === true ? (
+								<DisabledMapIcon />
+							) : (
+								<StyledMapIcon
+									style={{
+										color: d.color,
+									}}
+								/>
+							)}
+
 							{d.imei && (
 								<>
 									IMEI: {formatIMEI(7)(d.imei)} <small>({d.name})</small>
 								</>
 							)}
 							{!d.imei && d.name}
-						</label>
+						</Label>
 						<A
 							href={`https://nrfcloud.com/#/devices/${d.deviceId}`}
 							title={`Open ${d.name} on nRF Connect for Cloud`}
@@ -185,6 +204,13 @@ export const DeviceSelector = ({
 						</A>
 					</Item>
 				))}
+			{!minimized && (
+				<Item>
+					<small>
+						Click a device identifier to toggle its visibility on the map.
+					</small>
+				</Item>
+			)}
 		</List>
 	)
 }

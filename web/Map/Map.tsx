@@ -140,7 +140,7 @@ const describeAirQuality = (
 	return { description: 'Excellent', rating: 'A' }
 }
 
-const byIMEI = (
+export const byIMEI = (
 	{ deviceId: ad, imei: ai }: Device,
 	{ deviceId: bd, imei: bi }: Device,
 ) => (ai || ad).localeCompare(bi || bd)
