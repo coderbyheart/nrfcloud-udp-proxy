@@ -4,7 +4,13 @@ import * as querystring from 'querystring'
 /**
  * Fetches the historical devices message of the last 24 hours
  */
-export const fetchHistoricalMessages = ({ apiKey }: { apiKey: string }) => {
+export const fetchHistoricalMessages = ({
+	apiKey,
+	numHours,
+}: {
+	apiKey: string
+	numHours?: number
+}) => {
 	const fetchRecursive = async (
 		deviceId: string,
 		apps?: Map<string, string>,
@@ -13,7 +19,7 @@ export const fetchHistoricalMessages = ({ apiKey }: { apiKey: string }) => {
 		fetch(
 			`https://api.nrfcloud.com/v1/messages?${querystring.stringify({
 				inclusiveStart: new Date(
-					new Date().getTime() - 60 * 60 * 24 * 1000,
+					new Date().getTime() - 60 * 60 * (numHours || 24) * 1000,
 				).toISOString(),
 				exclusiveEnd: new Date().toISOString(),
 				deviceIdentifiers: deviceId,

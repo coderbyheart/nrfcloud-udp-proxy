@@ -85,7 +85,10 @@ const bifravstCellgeolocationResolver = memoize(
 	}),
 )
 
-const fetchMessages = fetchHistoricalMessages({ apiKey })
+const fetchMessages = fetchHistoricalMessages({
+	apiKey,
+	numHours: parseInt(process.env.HISTORY_HOURS || '24', 10),
+})
 const fetchDeviceInfo = fetchDevice({ apiKey })
 
 const proxy = async () => {
