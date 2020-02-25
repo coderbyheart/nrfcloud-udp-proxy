@@ -14,6 +14,7 @@ import { RSRP, RSRPBar, dbmToRSRP } from '@bifravst/rsrp-bar'
 import styled from 'styled-components'
 import { formatDistanceToNow } from 'date-fns'
 import { DeviceSelector, DeviceHiddenMap } from './DeviceSelector'
+import { filter as filterOperator } from 'mcc-mnc-list'
 
 import MapIcon from '../marker.svg'
 
@@ -34,6 +35,8 @@ export type Device = {
 	pressure?: number
 	rsrpDbm?: number
 	imei?: string
+	mccmnc?: string
+	networkInfo?: { mccmnc: string; cellID: number; areaCode: number }
 }
 
 const colors = [
@@ -109,8 +112,20 @@ const StyledMapIcon = styled(MapIcon)`
 	margin-left: 45px;
 `
 
+const Operator = styled.span`
+	position: absolute;
+	bottom: 0;
+	left: 15px;
+	line-height: 1;
+	color: #fff;
+	text-shadow: 1px 1px 1px #000000a0, -1px 1px 1px #000000a0,
+		1px -1px 1px #000000a0, -1px -1px 1px #000000a0;
+	font-size: 12px;
+`
+
 const CustomIconStyle = createGlobalStyle`
 	.thingyIcon {
+		position: relative;
 		div.label {
 			width: 100%;
 			text-align: center;
@@ -223,7 +238,12 @@ export const Map = ({ proxyEndpoint }: { proxyEndpoint: string }) => {
 		connection.onmessage = message => {
 			const update = JSON.parse(message.data)
 			debugWs(update)
-			if ('geolocation' in update || 'cellGeolocation' in update) {
+			if (
+				'geolocation' in update ||
+				'cellGeolocation' in update ||
+				'imei' in update ||
+				'networkInfo' in update
+			) {
 				updateDevices(devices =>
 					[
 						...devices.filter(d => update.deviceId !== d.deviceId),
@@ -298,6 +318,7 @@ export const Map = ({ proxyEndpoint }: { proxyEndpoint: string }) => {
 							pressure,
 							rsrpDbm,
 							color,
+							networkInfo,
 						},
 						k,
 					) => {
@@ -317,6 +338,12 @@ export const Map = ({ proxyEndpoint }: { proxyEndpoint: string }) => {
 						if (cellGeolocation && cellGeolocationTime > geolocationTime) {
 							markerPos = cellGeolocation
 						}
+
+						const op = networkInfo?.mccmnc
+							? filterOperator({
+									mccmnc: `${networkInfo.mccmnc}`,
+							  })?.[0]?.brand
+							: undefined
 
 						return (
 							<React.Fragment key={k}>
@@ -362,6 +389,7 @@ export const Map = ({ proxyEndpoint }: { proxyEndpoint: string }) => {
 														renderInvalid={() => <span>❎</span>}
 													/>
 												)}
+												{op && <Operator>{op}</Operator>}
 											</>,
 										),
 									})}
@@ -386,6 +414,12 @@ export const Map = ({ proxyEndpoint }: { proxyEndpoint: string }) => {
 										)}{' '}
 										ago
 										<br />
+										{op && (
+											<>
+												Operator: {op}
+												<br />
+											</>
+										)}
 										{rsrpDbm && (
 											<>
 												RSRP: {rsrpDbm}dbm

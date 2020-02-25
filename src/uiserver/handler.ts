@@ -3,7 +3,7 @@ import * as path from 'path'
 import * as http from 'http'
 import { fetchDevices } from '../nrfcloud'
 import { pipe } from 'fp-ts/lib/pipeable'
-import { DeviceConnection } from '../proxy'
+import { DeviceConnection, NetworkInfo } from '../proxy'
 import * as TE from 'fp-ts/lib/TaskEither'
 import { DeviceCellGeolocations, DeviceGeolocations } from './UIServer'
 
@@ -14,6 +14,7 @@ export const handler = ({
 	deviceCellGeolocations,
 	deviceAppStates,
 	deviceIMEIs,
+	deviceNetworkInfo,
 }: {
 	apiKey: string
 	deviceConnections: Map<string, DeviceConnection>
@@ -21,6 +22,7 @@ export const handler = ({
 	deviceCellGeolocations: DeviceCellGeolocations
 	deviceAppStates: Map<string, { [key: string]: any }>
 	deviceIMEIs: Map<string, string>
+	deviceNetworkInfo: Map<string, NetworkInfo>
 }): http.RequestListener => async (request, response) => {
 	if (request.method === 'OPTIONS') {
 		response.writeHead(200, {
@@ -88,6 +90,7 @@ export const handler = ({
 							name: devices.find(({ id }) => id === deviceId)?.name || deviceId,
 							...deviceAppStates.get(deviceId),
 							imei: deviceIMEIs.get(deviceId),
+							networkInfo: deviceNetworkInfo.get(deviceId),
 						}),
 					)
 					const res = JSON.stringify(d)

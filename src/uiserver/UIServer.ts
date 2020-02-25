@@ -1,5 +1,5 @@
 import * as chalk from 'chalk'
-import { DeviceConnection, DeviceAppMessage } from '../proxy'
+import { DeviceConnection, DeviceAppMessage, NetworkInfo } from '../proxy'
 import {
 	server as WebSocketServer,
 	connection as WSConnection,
@@ -55,6 +55,7 @@ export const UIServer = async ({
 	const deviceCellGeolocations: DeviceCellGeolocations = new Map()
 	const deviceAppStates = new Map<string, { [key: string]: any }>()
 	const deviceIMEIs = new Map<string, string>()
+	const deviceNetworkInfo = new Map<string, NetworkInfo>()
 
 	const h = handler({
 		deviceGeolocations,
@@ -63,6 +64,7 @@ export const UIServer = async ({
 		deviceConnections,
 		deviceAppStates,
 		deviceIMEIs,
+		deviceNetworkInfo,
 	})
 
 	const uiServer =
@@ -136,6 +138,16 @@ export const UIServer = async ({
 			updateClients({
 				deviceId: device.deviceId,
 				imei,
+			})
+		},
+		updateDeviceNetworkInfo: (
+			device: DeviceConnection,
+			networkInfo: NetworkInfo,
+		) => {
+			deviceNetworkInfo.set(device.deviceId, networkInfo)
+			updateClients({
+				deviceId: device.deviceId,
+				networkInfo,
 			})
 		},
 		updateDeviceCellGeoLocation: (

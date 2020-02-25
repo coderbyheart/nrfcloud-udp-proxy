@@ -33,6 +33,7 @@
     "feather-icons": "^4.26.0",
     "greenlock-express": "^4.0.3",
     "leaflet": "^1.6.0",
+    "mcc-mnc-list": "git+https://github.com/bifravst/mcc-mnc-list.git#add-typescript-declarations",
     "nmea-simple": "^3.0.0",
     "node-fetch": "^2.6.0",
     "react": "^16.12.0",

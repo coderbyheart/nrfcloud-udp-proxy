@@ -24,6 +24,8 @@ export type DeviceConnection = {
 
 export type DeviceAppMessage = { appId: string; data: any }
 
+export type NetworkInfo = { mccmnc: string; cellID: number; areaCode: number }
+
 const dataDir = process.env.DATA_DIR || process.cwd()
 const apiKey = process.env.API_KEY || ''
 const port = process.env.PORT || '8888'
@@ -211,7 +213,7 @@ const proxy = async () => {
 
 	const processNetworkInfo = (
 		c: DeviceConnection,
-		networkInfo: { mccmnc: string; cellID: number; areaCode: number },
+		networkInfo: NetworkInfo,
 		ts?: Date,
 	) => {
 		const cellQuery = {
@@ -278,6 +280,10 @@ const proxy = async () => {
 				})
 				if (message.state?.reported?.device?.networkInfo) {
 					processNetworkInfo(c, message.state?.reported?.device?.networkInfo)
+					uiServer.updateDeviceNetworkInfo(
+						c,
+						message?.state?.reported?.device?.networkInfo,
+					)
 				}
 				if (message?.state?.reported?.device?.deviceInfo?.imei) {
 					uiServer.updateDeviceIMEI(
@@ -361,6 +367,7 @@ const proxy = async () => {
 								?.timestamp * 1000,
 						),
 					)
+					uiServer.updateDeviceNetworkInfo(connection, networkInfo)
 				}
 				if (device?.state?.reported?.device?.deviceInfo?.imei) {
 					withts(console.log)(
