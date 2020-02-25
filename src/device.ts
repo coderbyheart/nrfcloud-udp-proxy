@@ -11,6 +11,7 @@ export const device = ({
 	ownershipCode,
 	associated,
 	mqttEndpoint,
+	messagesPrefix,
 	onAssociated,
 	apiKey,
 	log,
@@ -22,6 +23,7 @@ export const device = ({
 	ownershipCode: string
 	associated: boolean
 	mqttEndpoint: string
+	messagesPrefix: string
 	apiKey: string
 	onAssociated: () => void
 	log: (...args: any[]) => void
@@ -35,10 +37,9 @@ export const device = ({
 		region: mqttEndpoint.split('.')[2],
 	})
 
-	const updateShadow = async (update: object) =>
+	const publish = (topic: string) => async (message: object): Promise<void> =>
 		new Promise<void>((resolve, reject) => {
-			const topic = `$aws/things/${deviceId}/shadow/update`
-			connection.publish(topic, JSON.stringify(update), undefined, err => {
+			connection.publish(topic, JSON.stringify(message), undefined, err => {
 				if (err) {
 					log(chalk.red(err.message))
 					return reject(err)
@@ -46,11 +47,14 @@ export const device = ({
 				log(
 					chalk.cyan('>'),
 					chalk.blue(topic),
-					chalk.yellow(JSON.stringify(update)),
+					chalk.yellow(JSON.stringify(message)),
 				)
 				resolve()
 			})
 		})
+
+	const sendMessage = publish(`${messagesPrefix}d/${deviceId}/d2c`)
+	const updateShadow = publish(`$aws/things/${deviceId}/shadow/update`)
 
 	connection.on('connect', async () => {
 		log(chalk.green(chalk.inverse(' connected ')))
@@ -111,5 +115,6 @@ export const device = ({
 	return {
 		connection,
 		updateShadow,
+		sendMessage,
 	}
 }

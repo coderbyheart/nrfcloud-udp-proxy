@@ -14,11 +14,12 @@ import { isLeft } from 'fp-ts/lib/Either'
 import { withts } from './logts'
 import { fetchHistoricalMessages } from './historyFetcher'
 import { fetchDevice } from './fetchDevice'
-import { GGAPacket } from 'nmea-simple'
+import { GGAPacket, encodeNmeaPacket } from 'nmea-simple'
 
 export type DeviceConnection = {
 	connection: AwsIotDevice
 	updateShadow: (update: object) => Promise<void>
+	sendMessage: (message: object) => Promise<void>
 	deviceId: string
 }
 
@@ -112,6 +113,7 @@ const proxy = async () => {
 				...args,
 				associated: associated || false,
 				mqttEndpoint,
+				messagesPrefix,
 				onAssociated: () => {
 					deviceConnections.get(deviceShortId)?.connection.publish(
 						`${messagesPrefix}d/${deviceId}/d2c`,
@@ -312,6 +314,11 @@ const proxy = async () => {
 					geoidalSeperation: 0,
 				}
 				uiServer.updateDeviceGeoLocation(c, packet)
+				c.sendMessage({
+					appId: 'GPS',
+					data: encodeNmeaPacket(packet),
+					messageType: 'DATA',
+				})
 			} else {
 				sendUpdate(deviceShortId, c, message as DeviceAppMessage)
 			}
