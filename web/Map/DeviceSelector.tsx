@@ -169,43 +169,49 @@ export const DeviceSelector = ({
 				</Button>
 			</Title>
 			{!minimized &&
-				[...devices].sort(byIMEI).map((d, k) => (
-					<Item key={k}>
-						<Label
-							htmlFor={`input-${k}`}
-							onClick={() => {
-								toggleDevice(d.deviceId)
-							}}
-						>
-							{isHidden[d.deviceId] === true ? (
-								<DisabledMapIcon />
-							) : (
-								<StyledMapIcon
-									style={{
-										color: d.color,
-									}}
-								/>
-							)}
-							{d.imei && (
-								<>
-									<span style={{ marginRight: '0.5rem' }}>
-										{formatIMEI(7)(d.imei)}
-									</span>
-									<small>{d.name}</small>
-								</>
-							)}
-							{!d.imei && d.name}
-						</Label>
-						<A
-							href={`https://nrfcloud.com/#/devices/${d.deviceId}`}
-							title={`Open ${d.name} on nRF Connect for Cloud`}
-							target="_blank"
-							rel="noopener nofollow"
-						>
-							<Open />
-						</A>
-					</Item>
-				))}
+				[...devices]
+					.sort(byIMEI)
+					.filter(
+						({ geolocation, cellGeolocation }) =>
+							geolocation || cellGeolocation,
+					)
+					.map((d, k) => (
+						<Item key={k}>
+							<Label
+								htmlFor={`input-${k}`}
+								onClick={() => {
+									toggleDevice(d.deviceId)
+								}}
+							>
+								{isHidden[d.deviceId] === true ? (
+									<DisabledMapIcon />
+								) : (
+									<StyledMapIcon
+										style={{
+											color: d.color,
+										}}
+									/>
+								)}
+								{d.imei && (
+									<>
+										<span style={{ marginRight: '0.5rem' }}>
+											{formatIMEI(7)(d.imei)}
+										</span>
+										<small>{d.name}</small>
+									</>
+								)}
+								{!d.imei && d.name}
+							</Label>
+							<A
+								href={`https://nrfcloud.com/#/devices/${d.deviceId}`}
+								title={`Open ${d.name} on nRF Connect for Cloud`}
+								target="_blank"
+								rel="noopener nofollow"
+							>
+								<Open />
+							</A>
+						</Item>
+					))}
 			{!minimized && (
 				<Item>
 					<small>
