@@ -1,9 +1,8 @@
 import * as fs from 'fs'
 import * as path from 'path'
-import * as chalk from 'chalk'
 import { v4 } from 'uuid'
 import fetch from 'node-fetch'
-import { withts } from './logts'
+import { Logger } from 'winston'
 
 export type DeviceConfig = {
 	deviceId: string
@@ -52,10 +51,12 @@ export const initConfig = async ({
 	deviceCount,
 	dataDir,
 	apiKey,
+	logger,
 }: {
 	deviceCount: number
 	dataDir: string
 	apiKey: string
+	logger: Logger
 }) => {
 	let config: Config
 
@@ -64,7 +65,7 @@ export const initConfig = async ({
 	try {
 		config = JSON.parse(fs.readFileSync(configFile, 'utf-8').toString())
 	} catch {
-		withts(console.log)(chalk.yellow('No configuration found, creating...'))
+		logger.info('No configuration found, creating...')
 		config = {}
 	}
 
@@ -72,10 +73,8 @@ export const initConfig = async ({
 	while (Object.entries(config).length < deviceCount) {
 		const deviceShortId = `${Object.entries(config).length}`
 		config[deviceShortId] = await registerDevice({ apiKey })
-		withts(console.log)(
-			chalk.green('New device created:'),
-			chalk.blueBright(deviceShortId),
-			chalk.cyan(config[deviceShortId].deviceId),
+		logger.info(
+			`New device created: #${deviceShortId}: ${config[deviceShortId].deviceId}`,
 		)
 		writeConfig(configFile)(config)
 	}

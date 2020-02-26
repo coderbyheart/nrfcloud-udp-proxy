@@ -1,4 +1,3 @@
-import * as chalk from 'chalk'
 import { device } from './device'
 import { device as AwsIotDevice } from 'aws-iot-device-sdk'
 import { server as UDPServer } from './udp-server'
@@ -11,10 +10,12 @@ import { resolveCellGeolocation as resolveCellGeolocationBifravst } from './cell
 import { orElse, map, mapLeft } from 'fp-ts/lib/TaskEither'
 import { pipe } from 'fp-ts/lib/pipeable'
 import { isLeft } from 'fp-ts/lib/Either'
-import { withts } from './logts'
 import { fetchHistoricalMessages } from './historyFetcher'
 import { fetchDevice } from './fetchDevice'
 import { GGAPacket, encodeNmeaPacket } from 'nmea-simple'
+import * as chalk from 'chalk'
+import { createLogger, format, transports, Logger } from 'winston'
+const { combine, label, timestamp, colorize, printf } = format
 
 export type DeviceConnection = {
 	connection: AwsIotDevice
@@ -36,6 +37,62 @@ const deviceCount = process.env.DEVICE_COUNT
 	: 3
 const adminEmail = process.env.ADMIN_EMAIL || ''
 
+const flatten = printf(({ level, message, label, timestamp }) => {
+	return `${chalk.grey(`[${timestamp}]`)} ${level} ${label} ${message}`
+})
+
+const topicLogger = (labelInfo: string, filename: string) =>
+	createLogger({
+		transports: [
+			new transports.Console({
+				level: 'info',
+				format: combine(
+					label({ label: labelInfo }),
+					colorize(),
+					timestamp(),
+					flatten,
+				),
+			}),
+			new transports.File({
+				filename,
+				level: 'debug',
+				format: combine(label({ label: labelInfo }), timestamp(), flatten),
+			}),
+		],
+	})
+
+const udpLogger = topicLogger(chalk.magenta('UDP Server'), 'udp-messages.log')
+const cellGeoServiceLogger = (service: string) =>
+	topicLogger(
+		chalk.bgBlue(` ${chalk.grey('Cell Geolocation')}: ${service} `),
+		`cell-geolocation-${service}.log`,
+	)
+const cellGeoLogger = topicLogger(
+	chalk.bgBlue('Cell Geolocation'),
+	'cell-geolocation.log',
+)
+
+const deviceLoggers = new Map<string, Logger>()
+const deviceLogger = (deviceShortId: string) => {
+	if (!deviceLoggers.has(deviceShortId)) {
+		deviceLoggers.set(
+			deviceShortId,
+			topicLogger(
+				chalk.blue(`Device #${deviceShortId}`),
+				`devices-${deviceShortId}.log`,
+			),
+		)
+	}
+	return deviceLoggers.get(deviceShortId) as Logger
+}
+
+const historyLogger = topicLogger(chalk.blue('History'), 'history.log')
+const webserverLogger = topicLogger(
+	chalk.yellowBright('Webserver'),
+	'webserver.log',
+)
+const configLogger = topicLogger(chalk.blueBright('Config'), 'config.log')
+
 const memoize = <R, T extends (...args: any[]) => R>(f: T): T => {
 	const memory = new Map<string, R>()
 	const g = (...args: any[]) => {
@@ -53,36 +110,14 @@ const unwiredLabsCellgeolocationResolver = memoize(
 		apiKey: process.env.UNWIREDLABS_API_KEY || '',
 		endpoint:
 			process.env.UNWIREDLABS_ENDPOINT || 'https://eu1.unwiredlabs.com/',
-		log: (...args) =>
-			withts(console.log)(
-				chalk.bgBlue(' Cell Geolocation '),
-				chalk.bgYellow(' UnwiredLabs '),
-				...args,
-			),
-		errorLog: (...args) =>
-			withts(console.error)(
-				chalk.bgBlue(' Cell Geolocation '),
-				chalk.bgYellow(' UnwiredLabs '),
-				...args.map((s: any) => chalk.red(JSON.stringify(s))),
-			),
+		logger: cellGeoServiceLogger('UnwiredLabs'),
 	}),
 )
 
 const bifravstCellgeolocationResolver = memoize(
 	resolveCellGeolocationBifravst({
 		endpoint: process.env.BIFRAVST_ENDPOINT || '',
-		log: (...args) =>
-			withts(console.log)(
-				chalk.bgBlue(' Cell Geolocation '),
-				chalk.bgYellow(' Bifravst '),
-				...args,
-			),
-		errorLog: (...args) =>
-			withts(console.error)(
-				chalk.bgBlue(' Cell Geolocation '),
-				chalk.bgYellow(' Bifravst '),
-				...args.map((s: any) => chalk.red(JSON.stringify(s))),
-			),
+		logger: cellGeoServiceLogger('Bifravst'),
 	}),
 )
 
@@ -97,6 +132,7 @@ const proxy = async () => {
 		apiKey,
 		deviceCount,
 		dataDir,
+		logger: configLogger,
 	})
 
 	const { mqttEndpoint, messagesPrefix } = await describeAccount({ apiKey })
@@ -131,8 +167,7 @@ const proxy = async () => {
 					})
 				},
 				apiKey,
-				log: (...args) =>
-					withts(console.log)(chalk.bgCyan(` ${deviceShortId} `), ...args),
+				logger: deviceLogger(deviceShortId),
 			})
 			deviceConnections.set(deviceShortId, {
 				deviceId: deviceId,
@@ -141,16 +176,14 @@ const proxy = async () => {
 		})
 
 	Object.entries(config).forEach(([deviceShortId, deviceConfig]) => {
-		withts(console.log)(
-			chalk.bgCyan(` ${deviceShortId} `),
-			chalk.yellow('Connecting device:'),
-			chalk.cyan(deviceConfig.deviceId),
+		deviceLogger(deviceShortId).info(
+			`Connecting device: ${deviceConfig.deviceId}`,
 		)
 		connectDevice({
 			...deviceConfig,
 			deviceShortId,
 		}).catch(err => {
-			withts(console.error)(chalk.red(err.message))
+			deviceLogger(deviceShortId).error(err.message)
 		})
 	})
 
@@ -161,6 +194,7 @@ const proxy = async () => {
 		deviceConnections,
 		dataDir,
 		maintainerEmail: adminEmail,
+		logger: webserverLogger,
 	})
 
 	const justInTimeRegistrations = new Map<string, Promise<DeviceConnection>>()
@@ -176,10 +210,7 @@ const proxy = async () => {
 			// parse the NMEA sentence
 			const maybePacket = parseNmea(message.data)
 			if (isLeft(maybePacket)) {
-				withts(console.error)(
-					chalk.magenta('UDP Server'),
-					chalk.red(maybePacket.left.message),
-				)
+				udpLogger.error(maybePacket.left.message)
 			} else {
 				const packet = maybePacket.right
 				if (packet.sentenceId === 'GGA') {
@@ -207,12 +238,7 @@ const proxy = async () => {
 		if (publish) {
 			const topic = `${messagesPrefix}d/${c.deviceId}/d2c`
 			c.connection.publish(topic, JSON.stringify(message))
-			withts(console.log)(
-				chalk.bgCyan(` ${deviceShortId} `),
-				chalk.blue('>'),
-				chalk.cyan(topic),
-				chalk.yellow(JSON.stringify(message)),
-			)
+			deviceLogger(deviceShortId).debug('>', topic, message)
 		}
 	}
 
@@ -230,34 +256,26 @@ const proxy = async () => {
 			bifravstCellgeolocationResolver(cellQuery),
 			orElse(() => unwiredLabsCellgeolocationResolver(cellQuery)),
 			map(cellGeolocation => {
-				withts(console.log)(
-					chalk.bgBlue(' Cell Geolocation '),
-					chalk.grey('located cell'),
-					chalk.blue(JSON.stringify(cellQuery)),
-					chalk.grey('at'),
-					chalk.blueBright(JSON.stringify(cellGeolocation)),
+				cellGeoLogger.debug(
+					`located cell ${JSON.stringify(cellQuery)} at ${JSON.stringify(
+						cellGeolocation,
+					)}`,
 				)
 				uiServer.updateDeviceCellGeoLocation(c, cellGeolocation, ts)
 			}),
 			mapLeft(error => {
-				withts(console.error)(
-					chalk.bgBlue(' Cell Geolocation '),
-					chalk.red(error.message),
-				)
+				cellGeoLogger.error(error.message)
 			}),
 		)()
 	}
 
 	UDPServer({
 		port,
-		log: (...args) => withts(console.log)(chalk.magenta('UDP Server'), ...args),
+		logger: udpLogger,
 		onMessage: async ({ deviceShortId, message }) => {
 			let c = deviceConnections.get(deviceShortId)
 			if (!c) {
-				withts(console.error)(
-					chalk.magenta('UDP Server'),
-					chalk.yellow(`Device ${deviceShortId} not registered!`),
-				)
+				udpLogger.info(`Device ${deviceShortId} not registered!`)
 				if (!justInTimeRegistrations.get(deviceShortId)) {
 					justInTimeRegistrations.set(
 						deviceShortId,
@@ -276,11 +294,8 @@ const proxy = async () => {
 			}
 			if ('state' in message) {
 				c.updateShadow(message).catch(err => {
-					withts(console.error)(
-						chalk.magenta('UDP Server'),
-						chalk.red(
-							`Failed to update shadow for device ${deviceShortId}: ${err.message}!`,
-						),
+					udpLogger.error(
+						`Failed to update shadow for device ${deviceShortId}: ${err.message}!`,
 					)
 				})
 				if (message.state?.reported?.device?.networkInfo) {
@@ -297,11 +312,7 @@ const proxy = async () => {
 					)
 				}
 			} else if ('geo' in message) {
-				withts(console.log)(
-					chalk.magenta('UDP Server'),
-					chalk.blue(c.deviceId),
-					chalk.yellow(JSON.stringify(message)),
-				)
+				deviceLogger(deviceShortId).debug(JSON.stringify(message))
 				const packet: GGAPacket = {
 					sentenceId: 'GGA',
 					time: new Date(),
@@ -327,21 +338,14 @@ const proxy = async () => {
 
 	// Fetch historical device data
 	deviceConnections.forEach(async (connection, deviceShortId) => {
-		withts(console.log)(
-			chalk.blue(`History`),
-			chalk.gray('Fetching history for device'),
-			chalk.green(connection.deviceId),
+		historyLogger.debug(
+			`Fetching history for device #${deviceShortId}: ${connection.deviceId}`,
 		)
 		// Messages
 		fetchMessages(connection.deviceId)
 			.then(hist =>
 				hist.forEach((v, k) => {
-					withts(console.log)(
-						chalk.blue(`History`),
-						chalk.green(connection.deviceId),
-						chalk.blueBright(k),
-						chalk.yellow(v),
-					)
+					historyLogger.debug(deviceShortId, connection.deviceId, k, v)
 					sendUpdate(deviceShortId, connection, {
 						appId: k,
 						data: v,
@@ -349,12 +353,8 @@ const proxy = async () => {
 				}),
 			)
 			.catch(err => {
-				console.error(
-					chalk.blue(`History`),
-					chalk.red(
-						`Failed to fetch messages for device ${connection.deviceId}!`,
-					),
-					chalk.red(err.message),
+				historyLogger.error(
+					`Failed to fetch messages for device #${deviceShortId}: ${connection.deviceId}! ${err.message}`,
 				)
 			})
 		// State
@@ -363,11 +363,10 @@ const proxy = async () => {
 				const networkInfo =
 					device?.state?.reported?.device?.networkInfo ?? undefined
 				if (networkInfo) {
-					withts(console.log)(
-						chalk.blue(`History`),
-						chalk.green(connection.deviceId),
-						chalk.blueBright('networkInfo'),
-						chalk.yellow(JSON.stringify(networkInfo)),
+					historyLogger.debug(
+						`networkInfo #${deviceShortId}: ${
+							connection.deviceId
+						}: ${JSON.stringify(networkInfo)}`,
 					)
 					processNetworkInfo(
 						connection,
@@ -380,11 +379,8 @@ const proxy = async () => {
 					uiServer.updateDeviceNetworkInfo(connection, networkInfo)
 				}
 				if (device?.state?.reported?.device?.deviceInfo?.imei) {
-					withts(console.log)(
-						chalk.blue(`History`),
-						chalk.green(connection.deviceId),
-						chalk.blueBright('IMEI'),
-						chalk.yellow(device?.state?.reported?.device?.deviceInfo?.imei),
+					historyLogger.debug(
+						`IMEI #${deviceShortId}: ${connection.deviceId}: ${device?.state?.reported?.device?.deviceInfo?.imei}`,
 					)
 					uiServer.updateDeviceIMEI(
 						connection,
@@ -393,16 +389,16 @@ const proxy = async () => {
 				}
 			})
 			.catch(err => {
-				console.error(
-					chalk.blue(`History`),
-					chalk.red(`Failed to fetch state for device ${connection.deviceId}!`),
-					chalk.red(err.message),
+				historyLogger.error(
+					`Failed to fetch state for device #${deviceShortId}: ${
+						connection.deviceId
+					}: ${JSON.stringify(err.message)}`,
 				)
 			})
 	})
 }
 
 proxy().catch(err => {
-	withts(console.error)(err.message)
+	console.error(err.message)
 	process.exit(1)
 })

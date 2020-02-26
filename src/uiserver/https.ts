@@ -1,4 +1,5 @@
 import * as http from 'http'
+import { Logger } from 'winston'
 
 const greenlockExpress = require('greenlock-express')
 
@@ -9,12 +10,12 @@ export const createHTTPSUiServer = async ({
 	handler,
 	maintainerEmail,
 	dataDir,
-	log,
+	logger,
 }: {
 	handler: http.RequestListener
 	maintainerEmail: string
 	dataDir: string
-	log: (...args: any[]) => void
+	logger: Logger
 }): Promise<http.Server> =>
 	new Promise(resolve => {
 		greenlockExpress
@@ -25,7 +26,8 @@ export const createHTTPSUiServer = async ({
 				securityUpdates: false,
 				cluster: false,
 				packageAgent: 'nrfcloud-udp-proxy/1.0',
-				notify: log,
+				notify: (...args: any[]) =>
+					logger.debug(`letsencrypt: ${JSON.stringify(args)}`),
 			})
 			.ready((glx: any) => {
 				const httpServer = glx.httpServer()

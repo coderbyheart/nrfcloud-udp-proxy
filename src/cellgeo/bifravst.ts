@@ -1,17 +1,16 @@
 import fetch from 'node-fetch'
 import * as TE from 'fp-ts/lib/TaskEither'
 import { Location } from './types'
+import { Logger } from 'winston'
 
 const query = ({
 	endpoint,
 	cell,
-	log,
-	errorLog,
+	logger,
 }: {
 	endpoint: string
 	cell: { areaCode: number; mccmnc: number; cellID: number }
-	log: (...args: any) => void
-	errorLog: (...args: any) => void
+	logger: Logger
 }) =>
 	TE.tryCatch<Error, Location>(
 		async () =>
@@ -31,30 +30,31 @@ const query = ({
 					}>
 				})
 				.then(res => {
-					log(`Cell geolocation found`, cell, res)
+					logger.debug(
+						`Cell geolocation found: ${JSON.stringify(cell)} ${JSON.stringify(
+							res,
+						)}`,
+					)
 					return res
 				}),
 		err => {
 			const msg = `Failed to resolve cell location (${JSON.stringify(cell)}): ${
 				(err as Error).message
 			}!`
-			errorLog(msg)
+			logger.error(msg)
 			return new Error(msg)
 		},
 	)
 
 export const resolveCellGeolocation = ({
 	endpoint,
-	log,
-	errorLog,
+	logger,
 }: {
 	endpoint: string
-	log: (...args: any) => void
-	errorLog: (...args: any) => void
+	logger: Logger
 }) => (cell: { areaCode: number; mccmnc: number; cellID: number }) =>
 	query({
 		endpoint,
 		cell,
-		log,
-		errorLog,
+		logger,
 	})

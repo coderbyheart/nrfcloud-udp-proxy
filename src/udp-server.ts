@@ -1,24 +1,23 @@
-import * as chalk from 'chalk'
 import * as dgram from 'dgram'
 import { parseJSON, toError, isLeft } from 'fp-ts/lib/Either'
-import { withts } from './logts'
+import { Logger } from 'winston'
 
 export const server = ({
 	port,
 	onMessage,
-	log,
+	logger,
 }: {
 	port: number | string
 	onMessage: (args: {
 		deviceShortId: string
 		message: { [key: string]: any }
 	}) => void
-	log: (...args: any[]) => void
+	logger: Logger
 }) => {
 	const server = dgram.createSocket('udp4')
 
 	server.on('error', error => {
-		log(chalk.red('Error:'), chalk.yellow(error.message))
+		logger.error(error.message)
 		server.close()
 	})
 
@@ -28,29 +27,18 @@ export const server = ({
 			.trim()
 			.split(':')
 		if (parts.length < 2) {
-			withts(console.log)(
-				chalk.magenta('UDP Server'),
-				chalk.red('Dropping invalid message'),
-				chalk.yellow(msg),
-			)
+			logger.debug('Dropping empty message')
 			return
 		}
-		log(
-			chalk.blue('<'),
-			chalk.cyan(`${info.address}:${info.port}`),
-			chalk.yellow(msg.toString().trim()),
-		)
+		logger.debug(`
+		< ${info.address}:${info.port}: ${msg.toString().trim()}`)
 
 		const [deviceShortId, ...message] = parts
 
 		const maybeParsedMessage = parseJSON(message.join(':'), toError)
 
 		if (isLeft(maybeParsedMessage)) {
-			withts(console.error)(
-				chalk.magenta('UDP Server'),
-				chalk.red('Failed to parse message as JSON!'),
-				chalk.yellow(message),
-			)
+			logger.error(`Failed to parse message as JSON: ${message}`)
 			return
 		} else {
 			onMessage({
@@ -64,11 +52,11 @@ export const server = ({
 		const address = server.address()
 		const port = address.port
 		const ipaddr = address.address
-		log(chalk.cyan('is listening at'), chalk.blue(`${ipaddr}:${port}`))
+		logger.info(`is listening at ${ipaddr}:${port}`)
 	})
 
 	server.on('close', () => {
-		log(chalk.magenta('closed'))
+		logger.info('closed')
 	})
 
 	server.bind(typeof port === 'string' ? parseInt(port, 10) : port)

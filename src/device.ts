@@ -1,5 +1,5 @@
-import * as chalk from 'chalk'
 import { device as AwsIotDevice } from 'aws-iot-device-sdk'
+import { Logger } from 'winston'
 
 import fetch from 'node-fetch'
 
@@ -14,7 +14,7 @@ export const device = ({
 	messagesPrefix,
 	onAssociated,
 	apiKey,
-	log,
+	logger,
 }: {
 	deviceId: string
 	caCert: string
@@ -26,7 +26,7 @@ export const device = ({
 	messagesPrefix: string
 	apiKey: string
 	onAssociated: () => void
-	log: (...args: any[]) => void
+	logger: Logger
 }) => {
 	const connection = new AwsIotDevice({
 		privateKey: Buffer.from(privateKey),
@@ -41,14 +41,10 @@ export const device = ({
 		new Promise<void>((resolve, reject) => {
 			connection.publish(topic, JSON.stringify(message), undefined, err => {
 				if (err) {
-					log(chalk.red(err.message))
+					logger.error(err.message)
 					return reject(err)
 				}
-				log(
-					chalk.cyan('>'),
-					chalk.blue(topic),
-					chalk.yellow(JSON.stringify(message)),
-				)
+				logger.debug(`> ${topic}: ${JSON.stringify(message)}`)
 				resolve()
 			})
 		})
@@ -57,7 +53,7 @@ export const device = ({
 	const updateShadow = publish(`$aws/things/${deviceId}/shadow/update`)
 
 	connection.on('connect', async () => {
-		log(chalk.green(chalk.inverse(' connected ')))
+		logger.info('connected')
 		// Associate it
 		if (!associated) {
 			await fetch(`https://api.nrfcloud.com/v1/association/${deviceId}`, {
@@ -67,7 +63,7 @@ export const device = ({
 				},
 				body: ownershipCode,
 			})
-			log(chalk.green('Device associated to tenant.'))
+			logger.info('Device associated to tenant.')
 			onAssociated()
 		}
 		connection.subscribe(`$aws/things/${deviceId}/shadow/update/rejected`)
@@ -93,23 +89,23 @@ export const device = ({
 				},
 			},
 		})
-		log(chalk.green('All UI services enabled.'))
+		logger.debug('All UI services enabled.')
 	})
 
 	connection.on('message', (topic, payload) => {
-		log(chalk.cyan('<'), chalk.blue(topic), chalk.yellow(payload))
+		logger.debug(`< ${topic}: ${payload.toString()}`)
 	})
 
 	connection.on('close', () => {
-		log(chalk.red(chalk.inverse(' disconnected! ')))
+		logger.error('disconnected!')
 	})
 
 	connection.on('reconnect', () => {
-		log(chalk.magenta('reconnecting...'))
+		logger.info('reconnect...')
 	})
 
 	connection.on('error', () => {
-		log(chalk.red(' ERROR '))
+		logger.error('ERROR!')
 	})
 
 	return {

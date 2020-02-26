@@ -1,4 +1,3 @@
-import * as chalk from 'chalk'
 import { DeviceConnection, DeviceAppMessage, NetworkInfo } from '../proxy'
 import {
 	server as WebSocketServer,
@@ -8,7 +7,7 @@ import { Packet } from 'nmea-simple'
 import { handler } from './handler'
 import { createHTTPSUiServer } from './https'
 import { createHTTPUiServer } from './http'
-import { withts } from '../logts'
+import { Logger } from 'winston'
 
 export type DeviceGeolocations = Map<string, Packet>
 
@@ -44,12 +43,14 @@ export const UIServer = async ({
 	deviceConnections,
 	dataDir,
 	maintainerEmail,
+	logger,
 }: {
 	apiKey: string
 	httpPort: number
 	deviceConnections: Map<string, DeviceConnection>
 	dataDir: string
 	maintainerEmail: string
+	logger: Logger
 }) => {
 	const deviceGeolocations: DeviceGeolocations = new Map()
 	const deviceCellGeolocations: DeviceCellGeolocations = new Map()
@@ -73,38 +74,24 @@ export const UIServer = async ({
 					handler: h,
 					maintainerEmail,
 					dataDir,
-					log: (...args: any[]) =>
-						withts(console.log)(
-							chalk.green(' HTTPS '),
-							...args.map(chalk.grey),
-						),
+					logger,
 			  })
 			: await createHTTPUiServer({ handler: h })
 
 	const wsConnections: WSConnection[] = []
 
 	uiServer.listen(httpPort, () => {
-		withts(console.log)(
-			chalk.yellowBright('WS Server'),
-			chalk.cyan('is listening at'),
-			chalk.blue(`0.0.0.0:${httpPort}`),
-		)
+		logger.info(`is listening at 0.0.0.0:${httpPort}`)
 		const wsServer = new WebSocketServer({
 			httpServer: uiServer,
 		})
 		wsServer.on('request', request => {
 			const connection = request.accept(undefined, request.origin)
-			withts(console.log)(
-				chalk.yellowBright('WS Server'),
-				chalk.cyan(`${connection.remoteAddress} connected`),
-			)
+			logger.debug(`${connection.remoteAddress} connected`)
 
 			wsConnections.push(connection)
 			connection.on('close', () => {
-				withts(console.log)(
-					chalk.yellowBright('WS Server'),
-					chalk.cyan(`${connection.remoteAddress} disconnected`),
-				)
+				logger.debug(`${connection.remoteAddress} disconnected`)
 				wsConnections.splice(wsConnections.indexOf(connection))
 			})
 		})
@@ -112,12 +99,7 @@ export const UIServer = async ({
 
 	const updateClients = (update: object) => {
 		wsConnections.forEach(connection => {
-			withts(console.log)(
-				chalk.yellowBright('WS Server'),
-				chalk.blue('>'),
-				chalk.cyan(connection.remoteAddress),
-				chalk.yellow(JSON.stringify(update)),
-			)
+			logger.debug(`> ${connection.remoteAddress} ${JSON.stringify(update)}`)
 			connection.send(JSON.stringify(update))
 		})
 	}

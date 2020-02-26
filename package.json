@@ -40,7 +40,8 @@
     "react-dom": "^16.12.0",
     "react-leaflet": "^2.6.1",
     "uuid": "^7.0.0",
-    "websocket": "^1.0.31"
+    "websocket": "^1.0.31",
+    "winston": "^3.2.1"
   },
   "devDependencies": {
     "@bifravst/code-style": "^6.0.5",

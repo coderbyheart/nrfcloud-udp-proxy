@@ -1,19 +1,18 @@
 import fetch from 'node-fetch'
 import * as TE from 'fp-ts/lib/TaskEither'
 import { Location } from './types'
+import { Logger } from 'winston'
 
 const query = ({
 	apiKey,
 	endpoint,
 	cell,
-	log,
-	errorLog,
+	logger,
 }: {
 	apiKey: string
 	endpoint: string
 	cell: { areaCode: number; mccmnc: number; cellID: number }
-	log: (...args: any) => void
-	errorLog: (...args: any) => void
+	logger: Logger
 }) =>
 	TE.tryCatch<Error, Location>(
 		async () =>
@@ -51,13 +50,17 @@ const query = ({
 				)
 				.then(({ status, message, lat, lon, accuracy }) => {
 					if (status === 'ok') {
-						log(`Cell geolocation found`, cell, {
-							status,
-							message,
-							lat,
-							lon,
-							accuracy,
-						})
+						logger.debug(
+							`Cell geolocation found: ${JSON.stringify(cell)} ${JSON.stringify(
+								{
+									status,
+									message,
+									lat,
+									lon,
+									accuracy,
+								},
+							)}`,
+						)
 						return { lat, lng: lon, accuracy }
 					}
 					throw new Error(message)
@@ -66,7 +69,7 @@ const query = ({
 			const msg = `Failed to resolve cell location (${JSON.stringify(cell)}): ${
 				(err as Error).message
 			}!`
-			errorLog(msg)
+			logger.error(msg)
 			return new Error(msg)
 		},
 	)
@@ -74,18 +77,15 @@ const query = ({
 export const resolveCellGeolocation = ({
 	apiKey,
 	endpoint,
-	log,
-	errorLog,
+	logger,
 }: {
 	apiKey: string
 	endpoint: string
-	log: (...args: any) => void
-	errorLog: (...args: any) => void
+	logger: Logger
 }) => (cell: { areaCode: number; mccmnc: number; cellID: number }) =>
 	query({
 		apiKey,
 		endpoint,
 		cell,
-		log,
-		errorLog,
+		logger,
 	})
