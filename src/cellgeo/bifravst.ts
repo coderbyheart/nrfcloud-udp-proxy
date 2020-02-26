@@ -41,7 +41,7 @@ const query = ({
 			const msg = `Failed to resolve cell location (${JSON.stringify(cell)}): ${
 				(err as Error).message
 			}!`
-			logger.error(msg)
+			logger.warn(msg)
 			return new Error(msg)
 		},
 	)

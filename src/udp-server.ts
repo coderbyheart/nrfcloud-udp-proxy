@@ -26,12 +26,11 @@ export const server = ({
 			.toString()
 			.trim()
 			.split(':')
+		logger.debug(`< ${info.address}:${info.port}: ${msg.toString().trim()}`)
 		if (parts.length < 2) {
 			logger.debug('Dropping empty message')
 			return
 		}
-		logger.debug(`
-		< ${info.address}:${info.port}: ${msg.toString().trim()}`)
 
 		const [deviceShortId, ...message] = parts
 

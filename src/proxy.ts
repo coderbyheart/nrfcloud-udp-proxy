@@ -238,7 +238,9 @@ const proxy = async () => {
 		if (publish) {
 			const topic = `${messagesPrefix}d/${c.deviceId}/d2c`
 			c.connection.publish(topic, JSON.stringify(message))
-			deviceLogger(deviceShortId).debug('>', topic, message)
+			deviceLogger(deviceShortId).debug(
+				`> ${topic}: ${JSON.stringify(message)}`,
+			)
 		}
 	}
 
