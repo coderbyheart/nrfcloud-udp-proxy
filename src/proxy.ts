@@ -278,11 +278,14 @@ const proxy = async () => {
 			let c = deviceConnections.get(deviceShortId)
 			if (!c) {
 				udpLogger.info(`Device ${deviceShortId} not registered!`)
-				if (!justInTimeRegistrations.get(deviceShortId)) {
+				if (!justInTimeRegistrations.has(deviceShortId)) {
 					justInTimeRegistrations.set(
 						deviceShortId,
 						registerDevice({ apiKey }).then(async cfg => {
 							config[deviceShortId] = cfg
+							deviceLogger(deviceShortId).info(
+								`New device created: #${deviceShortId}: ${cfg.deviceId}`,
+							)
 							return connectDevice({
 								...config[deviceShortId],
 								deviceShortId,

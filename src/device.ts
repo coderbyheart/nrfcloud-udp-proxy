@@ -37,6 +37,9 @@ export const device = ({
 		region: mqttEndpoint.split('.')[2],
 	})
 
+	let connected = false
+	let associationSent = false
+
 	const publish = (topic: string) => async (message: object): Promise<void> =>
 		new Promise<void>((resolve, reject) => {
 			connection.publish(topic, JSON.stringify(message), undefined, err => {
@@ -54,18 +57,7 @@ export const device = ({
 
 	connection.on('connect', async () => {
 		logger.info('connected')
-		// Associate it
-		if (!associated) {
-			await fetch(`https://api.nrfcloud.com/v1/association/${deviceId}`, {
-				method: 'PUT',
-				headers: {
-					Authorization: `Bearer ${apiKey}`,
-				},
-				body: ownershipCode,
-			})
-			logger.info('Device associated to tenant.')
-			onAssociated()
-		}
+		connected = true
 		connection.subscribe(`$aws/things/${deviceId}/shadow/update/rejected`)
 		connection.subscribe(`$aws/things/${deviceId}/shadow/update/accepted`)
 		await updateShadow({
@@ -90,6 +82,19 @@ export const device = ({
 			},
 		})
 		logger.debug('All UI services enabled.')
+		// Associate it
+		if (connected && !associated && !associationSent) {
+			associationSent = true
+			await fetch(`https://api.nrfcloud.com/v1/association/${deviceId}`, {
+				method: 'PUT',
+				headers: {
+					Authorization: `Bearer ${apiKey}`,
+				},
+				body: ownershipCode,
+			})
+			logger.info('Device associated to tenant.')
+			onAssociated()
+		}
 	})
 
 	connection.on('message', (topic, payload) => {
@@ -98,6 +103,7 @@ export const device = ({
 
 	connection.on('close', () => {
 		logger.error('disconnected!')
+		connected = false
 	})
 
 	connection.on('reconnect', () => {
