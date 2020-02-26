@@ -54,7 +54,7 @@ export const server = ({
 			return
 		} else {
 			onMessage({
-				deviceShortId,
+				deviceShortId: deviceShortId.replace(/[^0-9a-z-]/g, ''),
 				message: maybeParsedMessage.right as { [key: string]: any },
 			})
 		}
