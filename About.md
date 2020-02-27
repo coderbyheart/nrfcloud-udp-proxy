@@ -79,6 +79,8 @@ and you can checkout the fork of `fw-nrfconnect-nrf` with the modifications
 
 The proxy server source code can be found
 [here](https://github.com/coderbyheart/nrfcloud-udp-proxy).
+
+
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbMTY3MzExMTEwXX0=
+eyJoaXN0b3J5IjpbMTY3OTUxMDc1NF19
 -->
