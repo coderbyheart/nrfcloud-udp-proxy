@@ -1,9 +1,9 @@
-# How we build the Embedded World 2020 ThingyWorld Map
+# How we build a world map of Thingy:91s for Embedd
 
 ![Screenshot of world.thingy.rocks](https://raw.githubusercontent.com/coderbyheart/nrfcloud-udp-proxy/blogpost/map.png)
 
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbLTEwMzc0MDUxNzUsMjEwNDUyODk5NywxNz
-cxOTU0MzcsLTEwNjc5OTY0MzddfQ==
+eyJoaXN0b3J5IjpbLTY5ODIyNjQyNywtMTAzNzQwNTE3NSwyMT
+A0NTI4OTk3LDE3NzE5NTQzNywtMTA2Nzk5NjQzN119
 -->
