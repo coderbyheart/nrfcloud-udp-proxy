@@ -29,7 +29,9 @@ This demo also helped us to showcase the variety of network operators that alrea
 
 ## Source code
 
-We won't release the demo into our SDK because it is not an example that should be widely adopted, it works well for a demo like this with a limited lifetime
+We won't release the demo into our SDK because it is not an example that should be widely adopted, it works well for a demo like this with a limited lifetime but is not secure and the protocol still has a lot of overhead.
+
+Nevertheless you can download the source code 
 
 **Pre-built binaries in the release:**  
 For LTE-M Network:  
@@ -42,8 +44,8 @@ _thingy91world_nbiot_udp_300s_dfu.bin_  - For use with nrfcloud FOTA or mcumgr c
 _thingy91world_nbiot_udp_300s_dfu.hex_  - For use with nRF Connect Programmer application.  
 _thingy91world_nbiot_udp_300s_full.hex_  - Full firmware image for use with external debug probe.
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbMTM2NjM5Mzc3NiwtMTg3Njc2Mzk2NSw0Mz
-I5NjkyMywtODUyOTgwNzQ5LC0xMDA4MDU4NjE0LC0xMDM3NDA1
-MTc1LDIxMDQ1Mjg5OTcsMTc3MTk1NDM3LC0xMDY3OTk2NDM3XX
-0=
+eyJoaXN0b3J5IjpbNzY0NjM1MTcwLC0xODc2NzYzOTY1LDQzMj
+k2OTIzLC04NTI5ODA3NDksLTEwMDgwNTg2MTQsLTEwMzc0MDUx
+NzUsMjEwNDUyODk5NywxNzcxOTU0MzcsLTEwNjc5OTY0MzddfQ
+==
 -->
