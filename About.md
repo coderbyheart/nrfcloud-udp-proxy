@@ -67,7 +67,7 @@ already support NB-IoT all over the world.
 
 ## Check it out
 
-We won't keep the proxy running after embedded world 2020, but you can check out the ThingyWorld any time, it serves a stackig s
+We won't keep the proxy running after embedded world 2020, but you can check out the ThingyWorld any time, it serves a static snapshot of the device data from the last conference day: <https://world.thingy.rocks/>.
 
 ## Source code
 
@@ -86,5 +86,5 @@ The proxy server source code can be found
 
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbOTY2MzcyNjQ5XX0=
+eyJoaXN0b3J5IjpbMTg4NjMyMTk3OF19
 -->
