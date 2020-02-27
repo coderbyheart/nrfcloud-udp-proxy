@@ -1,6 +1,6 @@
 # How we build ThingyWorld for Embedded World 2020
 
-[![Video showing the demo](./docs/videostill.jpg)](https://www.youtube.com/watch?v=ZmoUq9ySme0&list=PLx_tBuQ_KSqF2aBctupibHBn3FC1QHWOx)
+[![Video showing the demo](./docs/videostill.jpg)](https://www.youtube.com/watch?v=ZmoUq9ySme0&list=PLx_tBuQ_KSqF2aBctupibHBn3FC1QHWOxtwitter.com/NordicTweets/status/1233002090311671809)
 
 When we wanted to show off our favorite development kit, the
 [Thingy:91](https://www.nordicsemi.com/Software-and-tools/Prototyping-platforms/Nordic-Thingy-91),
@@ -79,3 +79,6 @@ and you can checkout the fork of `fw-nrfconnect-nrf` with the modifications
 
 The proxy server source code can be found
 [here](https://github.com/coderbyheart/nrfcloud-udp-proxy).
+<!--stackedit_data:
+eyJoaXN0b3J5IjpbMTY3MzExMTEwXX0=
+-->
