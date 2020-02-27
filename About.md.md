@@ -15,7 +15,9 @@ We sent out one firmware hexfile to our field application engineers and withing 
 
 ![Screenshot of world.thingy.rocks](https://raw.githubusercontent.com/coderbyheart/nrfcloud-udp-proxy/blogpost/map.png)
 
+The incoming data is forwarded to nRF Connect for Cloud where t
 
+This demo also helped us to showcase the variety of network operators that already support NB-IoT all over the world.
 
 **Pre-built binaries in the release:**  
 For LTE-M Network:  
@@ -28,7 +30,8 @@ _thingy91world_nbiot_udp_300s_dfu.bin_  - For use with nrfcloud FOTA or mcumgr c
 _thingy91world_nbiot_udp_300s_dfu.hex_  - For use with nRF Connect Programmer application.  
 _thingy91world_nbiot_udp_300s_full.hex_  - Full firmware image for use with external debug probe.
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbLTE4NzY3NjM5NjUsNDMyOTY5MjMsLTg1Mj
-k4MDc0OSwtMTAwODA1ODYxNCwtMTAzNzQwNTE3NSwyMTA0NTI4
-OTk3LDE3NzE5NTQzNywtMTA2Nzk5NjQzN119
+eyJoaXN0b3J5IjpbLTIxODc2NjM0LC0xODc2NzYzOTY1LDQzMj
+k2OTIzLC04NTI5ODA3NDksLTEwMDgwNTg2MTQsLTEwMzc0MDUx
+NzUsMjEwNDUyODk5NywxNzcxOTU0MzcsLTEwNjc5OTY0MzddfQ
+==
 -->
