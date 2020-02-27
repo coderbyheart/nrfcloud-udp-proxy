@@ -9,7 +9,7 @@ To have a better experience in 2020 we needed to used UDP to be able to send rea
 
 We decided to modify the existing `asset_tracker` example from our [nRF Connect SDK](https://www.nordicsemi.com/Software-and-tools/Software/nRF-Connect-SDK) so it sends the messages intended for nRF Connect for Cloud MQTT broker to an *UDP proxy* instead. To simplify the communication we decided to not authenticate the devices any more and only use the IMEI of a device as an identifier. This removed the need for the rather complicated process of flashing certificates to devices and associating them with an nRF Connect for Cloud account; this is the task of the proxy server.
 
-The proxy server listens for incoming messages in the format `<device id>:<JSON payload>` and registers an nRF Connect for Cloud device _on demand_ for devices that haven sent messages in before. This has serious security implications, but for a demo use-case this turned out to be a great solution.
+The proxy server (written in Node.js and running on an AWS EC2 t2.micro instance) listens for incoming messages in the format `<device id>:<JSON payload>` and registers an nRF Connect for Cloud device _on demand_ for devices that haven sent messages in before. This has serious security implications, but for a demo use-case this turned out to be a great solution.
 
 We sent out one firmware hexfile to our field application engineers and withing  hours we had thingies connecting literally from all over the world, because all they needed to do was to flash the hexfile, and turn on the Thingy:91. The proxy was then taking care of the rest.
 
@@ -28,7 +28,7 @@ _thingy91world_nbiot_udp_300s_dfu.bin_  - For use with nrfcloud FOTA or mcumgr c
 _thingy91world_nbiot_udp_300s_dfu.hex_  - For use with nRF Connect Programmer application.  
 _thingy91world_nbiot_udp_300s_full.hex_  - Full firmware image for use with external debug probe.
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbNDMyOTY5MjMsLTg1Mjk4MDc0OSwtMTAwOD
-A1ODYxNCwtMTAzNzQwNTE3NSwyMTA0NTI4OTk3LDE3NzE5NTQz
-NywtMTA2Nzk5NjQzN119
+eyJoaXN0b3J5IjpbLTE4NzY3NjM5NjUsNDMyOTY5MjMsLTg1Mj
+k4MDc0OSwtMTAwODA1ODYxNCwtMTAzNzQwNTE3NSwyMTA0NTI4
+OTk3LDE3NzE5NTQzNywtMTA2Nzk5NjQzN119
 -->
