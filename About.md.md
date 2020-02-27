@@ -19,7 +19,7 @@ The incoming data is forwarded to nRF Connect for Cloud where it arrives as if t
 
 ![Device data on nRF Connect for Cloud](https://raw.githubusercontent.com/coderbyheart/nrfcloud-udp-proxy/blogpost/nrfconnectforcloud.png)
 
-In addition it is send directly to the WorldMap that the proxy is hosting, using a websocket connection so real-time updates appear on the map. This enabled us for the the first time to visualiz
+In addition it is send directly to the WorldMap that the proxy is hosting, using a websocket connection so real-time updates appear on the map. This enabled us for the the first time to visualize signal strength properly and to highlight the air quality feature of Bosch's [BME680'
 
 This demo also helped us to showcase the variety of network operators that already support NB-IoT all over the world.
 
@@ -34,7 +34,7 @@ _thingy91world_nbiot_udp_300s_dfu.bin_  - For use with nrfcloud FOTA or mcumgr c
 _thingy91world_nbiot_udp_300s_dfu.hex_  - For use with nRF Connect Programmer application.  
 _thingy91world_nbiot_udp_300s_full.hex_  - Full firmware image for use with external debug probe.
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbLTcyNDU5MzMxOSwtMTg3Njc2Mzk2NSw0Mz
+eyJoaXN0b3J5IjpbMTgzMzU5NTQ2NiwtMTg3Njc2Mzk2NSw0Mz
 I5NjkyMywtODUyOTgwNzQ5LC0xMDA4MDU4NjE0LC0xMDM3NDA1
 MTc1LDIxMDQ1Mjg5OTcsMTc3MTk1NDM3LC0xMDY3OTk2NDM3XX
 0=
