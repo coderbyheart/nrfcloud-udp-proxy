@@ -1,4 +1,4 @@
-# How we build ThingyWorld for Embedded World 2020
+# How we build ThingyWorld for embedded world 2020
 
 [![Video showing the demo](./docs/videostill.jpg)](https://www.youtube.com/watch?v=ZmoUq9ySme0&list=PLx_tBuQ_KSqF2aBctupibHBn3FC1QHWOxtwitter.com/NordicTweets/status/1233002090311671809)
 
@@ -65,6 +65,10 @@ approximated using their cell information:
 This demo also helped us to showcase the variety of network operators that
 already support NB-IoT all over the world.
 
+## Check it out
+
+We won't keep the proxy running after embedded world 2020, but you can check out the ThingyWorld any time, it serves a stackig s
+
 ## Source code
 
 We won't release the demo into our SDK because it is not an example that should
@@ -82,5 +86,5 @@ The proxy server source code can be found
 
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbMTY3OTUxMDc1NF19
+eyJoaXN0b3J5IjpbOTY2MzcyNjQ5XX0=
 -->
