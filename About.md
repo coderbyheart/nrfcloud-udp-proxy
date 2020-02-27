@@ -30,7 +30,7 @@ account; this is the task of the proxy server.
 The proxy server (written in Node.js and running on an AWS EC2 t2.micro
 instance) listens for incoming messages in the format
 `<device id>:<JSON payload>` and registers an nRF Connect for Cloud device _on
-demand_ for devices that haven sent messages in before. This has serious
+demand_ for devices that haven't sent messages in before. This has serious
 security implications, but for a demo use-case this turned out to be a great
 solution.
 
