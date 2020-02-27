@@ -27,6 +27,10 @@ We also prepared for the fact that the Thingy's on the trade show floor won't be
 
 This demo also helped us to showcase the variety of network operators that already support NB-IoT all over the world.
 
+## Source code
+
+We won't release the demo into our SDK because it is not an example that should be widely adopted, it works well for a demo like this with a limited lifetime
+
 **Pre-built binaries in the release:**  
 For LTE-M Network:  
 _thingy91world_ltem_udp_300s_dfu.bin_  - For use with nrfcloud FOTA or mcumgr command line firmware update.  
@@ -38,7 +42,7 @@ _thingy91world_nbiot_udp_300s_dfu.bin_  - For use with nrfcloud FOTA or mcumgr c
 _thingy91world_nbiot_udp_300s_dfu.hex_  - For use with nRF Connect Programmer application.  
 _thingy91world_nbiot_udp_300s_full.hex_  - Full firmware image for use with external debug probe.
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbMTI4MjUxMjAyOCwtMTg3Njc2Mzk2NSw0Mz
+eyJoaXN0b3J5IjpbMTM2NjM5Mzc3NiwtMTg3Njc2Mzk2NSw0Mz
 I5NjkyMywtODUyOTgwNzQ5LC0xMDA4MDU4NjE0LC0xMDM3NDA1
 MTc1LDIxMDQ1Mjg5OTcsMTc3MTk1NDM3LC0xMDY3OTk2NDM3XX
 0=
