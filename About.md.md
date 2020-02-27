@@ -3,9 +3,7 @@
 ![Screenshot of world.thingy.rocks](https://raw.githubusercontent.com/coderbyheart/nrfcloud-udp-proxy/blogpost/map.png)
 
 
-
-
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbMjEwNDUyODk5NywxNzcxOTU0MzcsLTEwNj
-c5OTY0MzddfQ==
+eyJoaXN0b3J5IjpbLTEwMzc0MDUxNzUsMjEwNDUyODk5NywxNz
+cxOTU0MzcsLTEwNjc5OTY0MzddfQ==
 -->
