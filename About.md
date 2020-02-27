@@ -60,7 +60,7 @@ resolve their cell locations using [locationapi.org](http://locationapi.org/).
 Devices show up on the map with a circle to indicate that their location is
 approximated using their cell information:
 
-![A device with an approximate location](https://github.com/coderbyheart/nrfcloud-udp-proxy/blob/blogpost/marker-ew.png?raw=true)
+![A device with an approximate location](./docs/marker-ew.png)
 
 This demo also helped us to showcase the variety of network operators that
 already support NB-IoT all over the world.
