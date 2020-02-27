@@ -31,21 +31,12 @@ This demo also helped us to showcase the variety of network operators that alrea
 
 We won't release the demo into our SDK because it is not an example that should be widely adopted, it works well for a demo like this with a limited lifetime but is not secure and the protocol still has a lot of overhead.
 
-Nevertheless you can download the source code for the `asset_tracker` application with the UDP backend [from here](https://github.com/coderbyheart/nrfcloud-udp-proxy/files/4261689/fw-nrfconnect-nrf-Thingy91WorldFW_v0.2.0.zip), and you can checkout the fork of [here](https://github.com/joakimtoe/fw-nrfconnect-nrf/tree/Thingy91WorldFW_v0.2.0)
+Nevertheless you can download the source code for the `asset_tracker` application with the UDP backend [from here](https://github.com/coderbyheart/nrfcloud-udp-proxy/files/4261689/fw-nrfconnect-nrf-Thingy91WorldFW_v0.2.0.zip), and you can checkout the fork of `fw-nrfconnect-nrf` with the modifications [here](https://github.com/joakimtoe/fw-nrfconnect-nrf/tree/Thingy91WorldFW_v0.2.0).
 
-**Pre-built binaries in the release:**  
-For LTE-M Network:  
-_thingy91world_ltem_udp_300s_dfu.bin_  - For use with nrfcloud FOTA or mcumgr command line firmware update.  
-_thingy91world_ltem_udp_300s_dfu.hex_  - For use with nRF Connect Programmer application.  
-_thingy91world_ltem_udp_300s_full.hex_  - Full firmware image for use with external debug probe.
-
-For NB-IoT Network:  
-_thingy91world_nbiot_udp_300s_dfu.bin_  - For use with nrfcloud FOTA or mcumgr command line firmware update.  
-_thingy91world_nbiot_udp_300s_dfu.hex_  - For use with nRF Connect Programmer application.  
-_thingy91world_nbiot_udp_300s_full.hex_  - Full firmware image for use with external debug probe.
+The proxy server source code can be found [here](https://github.com/coderbyheart/nrfcloud-udp-proxy).
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbLTE5MTY5OTkyNzAsNzY0NjM1MTcwLC0xOD
-c2NzYzOTY1LDQzMjk2OTIzLC04NTI5ODA3NDksLTEwMDgwNTg2
-MTQsLTEwMzc0MDUxNzUsMjEwNDUyODk5NywxNzcxOTU0MzcsLT
-EwNjc5OTY0MzddfQ==
+eyJoaXN0b3J5IjpbMjAwMTU2MzIxOCw3NjQ2MzUxNzAsLTE4Nz
+Y3NjM5NjUsNDMyOTY5MjMsLTg1Mjk4MDc0OSwtMTAwODA1ODYx
+NCwtMTAzNzQwNTE3NSwyMTA0NTI4OTk3LDE3NzE5NTQzNywtMT
+A2Nzk5NjQzN119
 -->
