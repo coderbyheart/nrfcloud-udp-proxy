@@ -2,8 +2,8 @@
 
 ![Screenshot of world.thingy.rocks](https://raw.githubusercontent.com/coderbyheart/nrfcloud-udp-proxy/blogpost/map.png)
 
-
+When we wanted to show off our 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbLTEwODYyNDQ2NzAsLTEwMzc0MDUxNzUsMj
+eyJoaXN0b3J5IjpbLTEwMDgwNTg2MTQsLTEwMzc0MDUxNzUsMj
 EwNDUyODk5NywxNzcxOTU0MzcsLTEwNjc5OTY0MzddfQ==
 -->
