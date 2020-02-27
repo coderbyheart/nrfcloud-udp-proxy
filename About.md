@@ -1,6 +1,6 @@
 # How we build ThingyWorld for Embedded World 2020
 
-[![Video showing the demo](./docs/videostill.jpg)](https://twitter.com/NordicTweets/status/1233002090311671809)
+[![Video showing the demo](./docs/videostill.jpg)](https://www.youtube.com/watch?v=ZmoUq9ySme0&list=PLx_tBuQ_KSqF2aBctupibHBn3FC1QHWOx)
 
 When we wanted to show off our favorite development kit, the
 [Thingy:91](https://www.nordicsemi.com/Software-and-tools/Prototyping-platforms/Nordic-Thingy-91),
