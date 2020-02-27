@@ -21,7 +21,7 @@ The incoming data is forwarded to nRF Connect for Cloud where it arrives as if t
 
 In addition it is send directly to the WorldMap that the proxy is hosting, using a websocket connection so real-time updates appear on the map. This enabled us for the the first time to visualize signal strength properly and to highlight the air quality feature of Bosch's [BME680](https://blog.nordicsemi.com/getconnected/bosch-sensortec-bme680-the-nose-of-nordics-thingy91) which calculates an Air Quality Index based on multiple environmental sensor readings. 
 
-We also prepared for the fact that the Thingy's on the trade show floor won't be able to ac
+We also prepared for the fact that the Thingy's on the trade show floor won't be able to acquire GPS fixes because they would be indoors, so we let the proxy resolve their cell locations using [locationapi.org](http://locationapi.org/). Devices show up on the map with a circle to indicate that their location is approximated using their cell 
 
 This demo also helped us to showcase the variety of network operators that already support NB-IoT all over the world.
 
@@ -36,7 +36,7 @@ _thingy91world_nbiot_udp_300s_dfu.bin_  - For use with nrfcloud FOTA or mcumgr c
 _thingy91world_nbiot_udp_300s_dfu.hex_  - For use with nRF Connect Programmer application.  
 _thingy91world_nbiot_udp_300s_full.hex_  - Full firmware image for use with external debug probe.
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbMTc0Njg4Nzg0MSwtMTg3Njc2Mzk2NSw0Mz
+eyJoaXN0b3J5IjpbLTg0NTcxODMxMiwtMTg3Njc2Mzk2NSw0Mz
 I5NjkyMywtODUyOTgwNzQ5LC0xMDA4MDU4NjE0LC0xMDM3NDA1
 MTc1LDIxMDQ1Mjg5OTcsMTc3MTk1NDM3LC0xMDY3OTk2NDM3XX
 0=
