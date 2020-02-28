@@ -18,7 +18,7 @@
     "Nordic Semiconductor",
     "IoT"
   ],
-  "author": "Markus Tacker <m@coderbyheart.com> | https://coderbyheart.com",
+  "author": "Nordic Semiconductor ASA | https://nordicsemi.com",
   "license": "BSD-3-Clause",
   "bugs": {
     "url": "https://github.com/coderbyheart/nrfcloud-udp-proxy/issues"
