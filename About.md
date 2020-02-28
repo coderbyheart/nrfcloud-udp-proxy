@@ -67,7 +67,7 @@ already support NB-IoT all over the world.
 
 ## Check it out
 
-We won't keep the proxy running after embedded world 2020, but you can check out the ThingyWorld any time, it serves a static snapshot of the device data from the last conference day: <https://world.thingy.rocks/>.
+We won't keep the proxy running after embedded world 2020, but you can check out the ThingyWorld any time, it serves a static snapshot of the device data from the last conference day: <http://ew20.world.thingy.rocks/>.
 
 ## Source code
 
@@ -83,8 +83,3 @@ and you can checkout the fork of `fw-nrfconnect-nrf` with the modifications
 
 The proxy server source code can be found
 [here](https://github.com/coderbyheart/nrfcloud-udp-proxy).
-
-
-<!--stackedit_data:
-eyJoaXN0b3J5IjpbMTg4NjMyMTk3OF19
--->
