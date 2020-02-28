@@ -2,7 +2,7 @@
 
 [![Video showing the demo](./docs/videostill.jpg)](https://www.youtube.com/watch?v=ZmoUq9ySme0&list=PLx_tBuQ_KSqF2aBctupibHBn3FC1QHWOxtwitter.com/NordicTweets/status/1233002090311671809)
 
-When we wanted to show off our favorite development kit, the
+When we wanted to show off our favorite prototyping platform, the
 [Thingy:91](https://www.nordicsemi.com/Software-and-tools/Prototyping-platforms/Nordic-Thingy-91),
 at last year's embedded world in Nuremberg, we discovered that because of the
 high volume of devices at the tradeshow, the TCP packets our Thingys were
