@@ -3,7 +3,7 @@
 [![Video showing the demo](./docs/videostill.jpg)](https://www.youtube.com/watch?v=ZmoUq9ySme0&list=PLx_tBuQ_KSqF2aBctupibHBn3FC1QHWOxtwitter.com/NordicTweets/status/1233002090311671809)
 
 When we wanted to show off our favorite prototyping platform, the
-[Thingy:91](https://www.nordicsemi.com/Software-and-tools/Prototyping-platforms/Nordic-Thingy-91),
+[Nordic Thingy:91](https://www.nordicsemi.com/Software-and-tools/Prototyping-platforms/Nordic-Thingy-91),
 at last year's embedded world in Nuremberg, we discovered that because of the
 high volume of devices at the tradeshow, the TCP packets our Thingys were
 sending on the NB-IoT network were dropped. To be fair NB-IoT are not designed
@@ -23,9 +23,9 @@ We decided to modify the existing `asset_tracker` example from our
 so it sends the messages intended for nRF Connect for Cloud MQTT broker to an
 _UDP proxy_ instead. To simplify the communication we decided to not
 authenticate the devices any more and only use the IMEI of a device as an
-identifier. This removed the need for the rather complicated process of flashing
-certificates to devices and associating them with an nRF Connect for Cloud
-account; this is the task of the proxy server.
+identifier. This removed the need for flashing certificates to devices and
+associating them with an nRF Connect for Cloud account; this is the task of the
+proxy server.
 
 The proxy server (written in Node.js and running on an AWS EC2 t2.micro
 instance) listens for incoming messages in the format
@@ -63,11 +63,13 @@ approximated using their cell information:
 ![A device with an approximate location](./docs/marker-ew.png)
 
 This demo also helped us to showcase the variety of network operators that
-already support NB-IoT all over the world.
+already support the nRF9160 all over the world.
 
 ## Check it out
 
-We won't keep the proxy running after embedded world 2020, but you can check out the ThingyWorld any time, it serves a static snapshot of the device data from the last conference day: <https://ew20.world.thingy.rocks/>.
+We won't keep the proxy running after embedded world 2020, but you can check out
+the ThingyWorld any time, it serves a static snapshot of the device data from
+the last conference day: <https://ew20.world.thingy.rocks/>.
 
 ## Source code
 
