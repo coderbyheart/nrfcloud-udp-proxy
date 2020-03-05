@@ -27,7 +27,7 @@
   "dependencies": {
     "@bifravst/rsrp-bar": "^2.0.0",
     "@types/react-dom": "^16.9.5",
-    "aws-sdk": "^2.625.0",
+    "aws-sdk": "^2.634.0",
     "chalk": "^3.0.0",
     "date-fns": "^2.10.0",
     "feather-icons": "^4.26.0",
