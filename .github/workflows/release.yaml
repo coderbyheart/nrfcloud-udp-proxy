@@ -14,9 +14,6 @@ jobs:
       - uses: actions/setup-node@v1
         with:
           node-version: "12.x"
-      - name: Authenticate with NPM
-        run: |
-          echo "//npm.pkg.github.com/:_authToken=$GITHUB_TOKEN" > ~/.npmrc
       - name: Keep npm cache around to speed up installs
         uses: actions/cache@v1
         with:
@@ -33,8 +30,6 @@ jobs:
       - name: Semantic release
         if: success()
         continue-on-error: true
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           npm i --no-save semantic-release@next
           npx semantic-release

@@ -7,7 +7,8 @@
 [![code style: prettier](https://img.shields.io/badge/code_style-prettier-ff69b4.svg)](https://github.com/prettier/prettier/)
 [![ESLint: TypeScript](https://img.shields.io/badge/ESLint-TypeScript-blue.svg)](https://github.com/typescript-eslint/typescript-eslint)
 
-> :information_source: see [About](./About.md) for background information about this project
+> :information_source: see [About](./About.md) for background information about
+> this project
 
 This proxy provides a UDP server, which listens for plaintext messages in the
 format:
@@ -66,7 +67,6 @@ Directly set the Geo location for a device:
 
 ### using Node.js
 
-    # Authenticate against GitHub: echo "//npm.pkg.github.com/:_authToken=${GITHUB_TOKEN}" > ~/.npmrc
     npm ci
     npx tsc
     npm run build
