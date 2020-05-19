@@ -28,7 +28,7 @@
   "homepage": "https://github.com/coderbyheart/nrfcloud-udp-proxy#readme",
   "dependencies": {
     "@bifravst/rsrp-bar": "^2.1.2",
-    "@types/react-dom": "^16.9.6",
+    "@types/react-dom": "^16.9.7",
     "aws-sdk": "^2.657.0",
     "chalk": "^4.0.0",
     "date-fns": "^2.12.0",
