@@ -59,7 +59,7 @@
     "@types/react": "^16.9.34",
     "@types/react-leaflet": "^2.5.1",
     "@types/styled-components": "^5.1.0",
-    "@types/uuid": "^7.0.2",
+    "@types/uuid": "^8.0.0",
     "@types/websocket": "^1.0.0",
     "aws-iot-device-sdk": "^2.2.4",
     "forever": "^2.0.0",
