@@ -62,7 +62,7 @@
     "@types/uuid": "^8.0.0",
     "@types/websocket": "^1.0.0",
     "aws-iot-device-sdk": "^2.2.4",
-    "forever": "^2.0.0",
+    "forever": "^3.0.0",
     "fp-ts": "^2.5.3",
     "husky": "^4.2.5",
     "react-svg-loader": "^3.0.3",
