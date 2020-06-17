@@ -29,7 +29,7 @@
   "dependencies": {
     "@bifravst/rsrp-bar": "^2.1.2",
     "@types/react-dom": "^16.9.8",
-    "aws-sdk": "^2.684.0",
+    "aws-sdk": "^2.685.0",
     "chalk": "^4.0.0",
     "date-fns": "^2.14.0",
     "feather-icons": "^4.28.0",
