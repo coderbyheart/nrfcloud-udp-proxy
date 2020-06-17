@@ -41,7 +41,7 @@
     "react": "^16.13.1",
     "react-dom": "^16.13.1",
     "react-leaflet": "^2.7.0",
-    "snyk": "^1.329.0",
+    "snyk": "^1.330.2",
     "uuid": "^8.1.0",
     "websocket": "^1.0.31",
     "winston": "^3.2.1"
