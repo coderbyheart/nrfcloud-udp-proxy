@@ -30,7 +30,7 @@
     "@bifravst/rsrp-bar": "^2.1.2",
     "@types/react-dom": "^16.9.8",
     "aws-sdk": "^2.684.0",
-    "chalk": "^4.0.0",
+    "chalk": "^4.1.0",
     "date-fns": "^2.14.0",
     "feather-icons": "^4.28.0",
     "greenlock-express": "^4.0.3",
