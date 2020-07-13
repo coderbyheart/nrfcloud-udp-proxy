@@ -44,7 +44,7 @@
     "snyk": "^1.329.0",
     "uuid": "^8.1.0",
     "websocket": "^1.0.31",
-    "winston": "^3.2.1"
+    "winston": "^3.3.2"
   },
   "devDependencies": {
     "@bifravst/code-style": "^8.0.0",
