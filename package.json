@@ -43,7 +43,7 @@
     "react-leaflet": "^2.7.0",
     "snyk": "^1.329.0",
     "uuid": "^8.1.0",
-    "websocket": "^1.0.31",
+    "websocket": "^1.0.32",
     "winston": "^3.2.1"
   },
   "devDependencies": {
